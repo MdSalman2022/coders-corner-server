@@ -20,6 +20,20 @@ export const initializeAuth = async () => {
   console.log("✅ Better Auth: Initializing with MongoDB connection");
   console.log("🗄️  Database name:", mongoose.connection.db?.databaseName);
 
+  console.log("🔧 Better Auth: Environment variables loaded:");
+  console.log(
+    "  GOOGLE_CLIENT_ID:",
+    process.env.GOOGLE_CLIENT_ID ? "✅ Set" : "❌ Missing"
+  );
+  console.log(
+    "  GITHUB_CLIENT_ID:",
+    process.env.GITHUB_CLIENT_ID ? "✅ Set" : "❌ Missing"
+  );
+  console.log(
+    "  BETTER_AUTH_SECRET:",
+    process.env.BETTER_AUTH_SECRET ? "✅ Set" : "❌ Missing"
+  );
+
   try {
     authInstance = betterAuth({
       database: mongodbAdapter(mongoose.connection.db, {
@@ -30,6 +44,16 @@ export const initializeAuth = async () => {
         requireEmailVerification: false,
         minPasswordLength: 6,
         autoSignIn: true,
+      },
+      socialProviders: {
+        google: {
+          clientId: process.env.GOOGLE_CLIENT_ID || "",
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+        },
+        github: {
+          clientId: process.env.GITHUB_CLIENT_ID || "",
+          clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+        },
       },
       user: {
         additionalFields: {
@@ -94,7 +118,9 @@ export const initializeAuth = async () => {
         },
       },
       baseURL: process.env.BASE_URL || "http://localhost:5000",
-      secret: process.env.JWT_SECRET || "your-secret-key-change-in-production",
+      secret:
+        process.env.BETTER_AUTH_SECRET ||
+        "your-secret-key-change-in-production",
       trustedOrigins: ["http://localhost:3000", "http://localhost:5000"],
       session: {
         cookieCache: {
@@ -107,6 +133,7 @@ export const initializeAuth = async () => {
           enabled: false, // Disable for localhost
         },
         disableCSRFCheck: true, // Disable for development
+        defaultRedirectURL: process.env.FRONTEND_URL || "http://localhost:3000",
       },
     });
 

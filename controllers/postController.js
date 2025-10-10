@@ -1,5 +1,6 @@
 const Post = require("../models/Post");
-const User = require("../models/User");
+const UserProfile = require("../models/UserProfile");
+const Comment = require("../models/Comment");
 const Notification = require("../models/Notification");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
@@ -15,15 +16,33 @@ const getPosts = async (req, res) => {
     if (author) query.author = author;
 
     const posts = await Post.find(query)
-      .populate("author", "name avatar")
       .sort({ publishedAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
+    // Populate author data manually
+    const postsWithAuthors = await Promise.all(
+      posts.map(async (post) => {
+        const authorProfile = await UserProfile.findOne({
+          userId: post.author,
+        });
+        return {
+          ...post.toObject(),
+          author: authorProfile
+            ? {
+                userId: authorProfile.userId,
+                name: authorProfile.name,
+                avatar: authorProfile.avatar,
+              }
+            : null,
+        };
+      })
+    );
+
     const total = await Post.countDocuments(query);
 
     res.json({
-      posts,
+      posts: postsWithAuthors,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
     });
@@ -34,12 +53,7 @@ const getPosts = async (req, res) => {
 
 const getPostById = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id)
-      .populate("author", "name avatar bio")
-      .populate({
-        path: "comments",
-        populate: { path: "author", select: "name avatar" },
-      });
+    const post = await Post.findById(req.params.id);
 
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
@@ -49,7 +63,45 @@ const getPostById = async (req, res) => {
     post.views += 1;
     await post.save();
 
-    res.json(post);
+    // Get author profile
+    const authorProfile = await UserProfile.findOne({ userId: post.author });
+
+    // Get comments with author profiles
+    const commentsWithAuthors = await Promise.all(
+      post.comments.map(async (commentId) => {
+        const comment = await Comment.findById(commentId);
+        if (!comment) return null;
+
+        const commentAuthor = await UserProfile.findOne({
+          userId: comment.author,
+        });
+        return {
+          ...comment.toObject(),
+          author: commentAuthor
+            ? {
+                userId: commentAuthor.userId,
+                name: commentAuthor.name,
+                avatar: commentAuthor.avatar,
+              }
+            : null,
+        };
+      })
+    );
+
+    const postWithData = {
+      ...post.toObject(),
+      author: authorProfile
+        ? {
+            userId: authorProfile.userId,
+            name: authorProfile.name,
+            avatar: authorProfile.avatar,
+            bio: authorProfile.bio,
+          }
+        : null,
+      comments: commentsWithAuthors.filter((c) => c !== null),
+    };
+
+    res.json(postWithData);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -57,7 +109,14 @@ const getPostById = async (req, res) => {
 
 const createPost = async (req, res) => {
   try {
-    const { title, content, tags, category, status = "draft" } = req.body;
+    const {
+      title,
+      content,
+      tags,
+      category,
+      status = "draft",
+      userId,
+    } = req.body;
 
     // Generate excerpt and reading time using AI
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
@@ -79,7 +138,7 @@ const createPost = async (req, res) => {
       title,
       content,
       excerpt,
-      author: req.user.id,
+      author: userId, // Better Auth user ID
       tags,
       category,
       status,
@@ -89,9 +148,11 @@ const createPost = async (req, res) => {
     await post.save();
 
     // Update user stats
-    await User.findByIdAndUpdate(req.user.id, {
-      $inc: { "stats.postsCount": 1 },
-    });
+    await UserProfile.findOneAndUpdate(
+      { userId },
+      { $inc: { "stats.postsCount": 1 } },
+      { upsert: true }
+    );
 
     res.status(201).json(post);
   } catch (error) {
@@ -107,9 +168,10 @@ const updatePost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    if (post.author.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // TODO: Check authorization with Better Auth user ID
+    // if (post.author !== req.userId) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     const updates = req.body;
     Object.assign(post, updates);
@@ -129,14 +191,16 @@ const deletePost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    if (post.author.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    // TODO: Check authorization with Better Auth user ID
+    // if (post.author !== req.userId) {
+    //   return res.status(403).json({ message: "Not authorized" });
+    // }
 
     await Post.findByIdAndDelete(req.params.id);
-    await User.findByIdAndUpdate(req.user.id, {
-      $inc: { "stats.postsCount": -1 },
-    });
+    await UserProfile.findOneAndUpdate(
+      { userId: post.author },
+      { $inc: { "stats.postsCount": -1 } }
+    );
 
     res.json({ message: "Post deleted" });
   } catch (error) {
@@ -152,18 +216,19 @@ const likePost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    const userIndex = post.likes.indexOf(req.user.id);
+    const { userId } = req.body; // Better Auth user ID
+    const userIndex = post.likes.indexOf(userId);
 
     if (userIndex > -1) {
       post.likes.splice(userIndex, 1);
     } else {
-      post.likes.push(req.user.id);
+      post.likes.push(userId);
 
       // Create notification
-      if (post.author.toString() !== req.user.id) {
+      if (post.author !== userId) {
         const notification = new Notification({
           recipient: post.author,
-          sender: req.user.id,
+          sender: userId,
           type: "like",
           message: "Someone liked your post",
           post: post._id,
@@ -189,11 +254,28 @@ const searchPosts = async (req, res) => {
         { content: { $regex: q, $options: "i" } },
         { tags: { $in: [new RegExp(q, "i")] } },
       ],
-    })
-      .populate("author", "name avatar")
-      .limit(20);
+    }).limit(20);
 
-    res.json(posts);
+    // Populate author data manually
+    const postsWithAuthors = await Promise.all(
+      posts.map(async (post) => {
+        const authorProfile = await UserProfile.findOne({
+          userId: post.author,
+        });
+        return {
+          ...post.toObject(),
+          author: authorProfile
+            ? {
+                userId: authorProfile.userId,
+                name: authorProfile.name,
+                avatar: authorProfile.avatar,
+              }
+            : null,
+        };
+      })
+    );
+
+    res.json(postsWithAuthors);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

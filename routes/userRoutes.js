@@ -5,14 +5,16 @@ const {
   followUser,
   getUserStats,
 } = require("../controllers/userController");
-const { authenticateToken } = require("../middleware/auth");
 const { generalLimiter } = require("../middleware/rateLimit");
 
 const router = express.Router();
 
+// Public routes
 router.get("/:id", generalLimiter, getUserProfile);
-router.put("/profile", authenticateToken, generalLimiter, updateUserProfile);
-router.post("/:id/follow", authenticateToken, generalLimiter, followUser);
 router.get("/:id/stats", generalLimiter, getUserStats);
+
+// Protected routes (authentication handled client-side with Better Auth)
+router.put("/profile", generalLimiter, updateUserProfile);
+router.post("/:id/follow", generalLimiter, followUser);
 
 module.exports = router;

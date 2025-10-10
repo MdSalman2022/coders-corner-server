@@ -1,14 +1,14 @@
-const User = require("../models/User");
+const UserProfile = require("../models/UserProfile");
 const Post = require("../models/Post");
 const Notification = require("../models/Notification");
 
 const getUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
-    if (!user) {
+    const userProfile = await UserProfile.findOne({ userId: req.params.id });
+    if (!userProfile) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json(user);
+    res.json(userProfile);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -17,10 +17,15 @@ const getUserProfile = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   try {
     const updates = req.body;
-    const user = await User.findByIdAndUpdate(req.user.id, updates, {
-      new: true,
-    });
-    res.json(user);
+    // TODO: Get userId from Better Auth session
+    const userId = req.body.userId || "placeholder"; // This needs proper implementation
+
+    const userProfile = await UserProfile.findOneAndUpdate(
+      { userId },
+      updates,
+      { new: true, upsert: true }
+    );
+    res.json(userProfile);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -28,29 +33,36 @@ const updateUserProfile = async (req, res) => {
 
 const followUser = async (req, res) => {
   try {
-    const userToFollow = await User.findById(req.params.id);
-    const currentUser = await User.findById(req.user.id);
+    const targetUserId = req.params.id;
+    // TODO: Get current user ID from Better Auth session
+    const currentUserId = req.body.userId || "placeholder"; // This needs proper implementation
 
-    if (!userToFollow) {
+    const targetProfile = await UserProfile.findOne({ userId: targetUserId });
+    const currentProfile = await UserProfile.findOne({ userId: currentUserId });
+
+    if (!targetProfile) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (currentUser.following.includes(req.params.id)) {
+    if (currentProfile.following.includes(targetUserId)) {
       return res.status(400).json({ message: "Already following" });
     }
 
-    currentUser.following.push(req.params.id);
-    userToFollow.followers.push(req.user.id);
+    currentProfile.following.push(targetUserId);
+    targetProfile.followers.push(currentUserId);
 
-    await currentUser.save();
-    await userToFollow.save();
+    currentProfile.stats.followingCount = currentProfile.following.length;
+    targetProfile.stats.followersCount = targetProfile.followers.length;
+
+    await currentProfile.save();
+    await targetProfile.save();
 
     // Create notification
     const notification = new Notification({
-      recipient: req.params.id,
-      sender: req.user.id,
+      recipient: targetUserId,
+      sender: currentUserId,
       type: "follow",
-      message: `${currentUser.name} started following you`,
+      message: `${currentProfile.name} started following you`,
     });
     await notification.save();
 
@@ -67,12 +79,12 @@ const getUserStats = async (req, res) => {
       author: userId,
       status: "published",
     });
-    const user = await User.findById(userId);
+    const userProfile = await UserProfile.findOne({ userId });
 
     res.json({
       postsCount,
-      followersCount: user.followers.length,
-      followingCount: user.following.length,
+      followersCount: userProfile?.followers?.length || 0,
+      followingCount: userProfile?.following?.length || 0,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

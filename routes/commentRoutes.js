@@ -1,5 +1,4 @@
 const express = require("express");
-const { authenticateToken } = require("../middleware/auth");
 const { generalLimiter } = require("../middleware/rateLimit");
 const { sanitizeInput } = require("../middleware/security");
 

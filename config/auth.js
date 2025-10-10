@@ -37,6 +37,60 @@ export const initializeAuth = async () => {
             type: "string",
             required: false,
           },
+          avatar: {
+            type: "string",
+            required: false,
+          },
+          bio: {
+            type: "string",
+            required: false,
+          },
+          website: {
+            type: "string",
+            required: false,
+          },
+          location: {
+            type: "string",
+            required: false,
+          },
+          skills: {
+            type: "string[]",
+            required: false,
+          },
+          socialLinks: {
+            type: "object",
+            required: false,
+            properties: {
+              github: { type: "string" },
+              linkedin: { type: "string" },
+              twitter: { type: "string" },
+            },
+          },
+          followers: {
+            type: "string[]",
+            required: false,
+          },
+          following: {
+            type: "string[]",
+            required: false,
+          },
+          preferences: {
+            type: "object",
+            required: false,
+            properties: {
+              topics: { type: "string[]" },
+              darkMode: { type: "boolean" },
+            },
+          },
+          stats: {
+            type: "object",
+            required: false,
+            properties: {
+              postsCount: { type: "number" },
+              followersCount: { type: "number" },
+              followingCount: { type: "number" },
+            },
+          },
         },
       },
       baseURL: process.env.BASE_URL || "http://localhost:5000",

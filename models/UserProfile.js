@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema({
+const userProfileSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true }, // Better Auth user ID
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   avatar: { type: String },
@@ -13,8 +14,8 @@ const userSchema = new mongoose.Schema({
     linkedin: { type: String },
     twitter: { type: String },
   },
-  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  followers: [{ type: String }], // Store Better Auth user IDs
+  following: [{ type: String }], // Store Better Auth user IDs
   preferences: {
     topics: [{ type: String }],
     darkMode: { type: Boolean, default: false },
@@ -28,9 +29,9 @@ const userSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-userSchema.pre("save", function (next) {
+userProfileSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model("UserProfile", userProfileSchema);

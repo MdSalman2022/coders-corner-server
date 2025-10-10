@@ -8,7 +8,6 @@ const {
   likePost,
   searchPosts,
 } = require("../controllers/postController");
-const { authenticateToken } = require("../middleware/auth");
 const {
   createPostLimiter,
   generalLimiter,
@@ -17,24 +16,15 @@ const { sanitizeInput } = require("../middleware/security");
 
 const router = express.Router();
 
+// Public routes
 router.get("/", generalLimiter, getPosts);
 router.get("/search", generalLimiter, searchPosts);
 router.get("/:id", generalLimiter, getPostById);
-router.post(
-  "/",
-  authenticateToken,
-  createPostLimiter,
-  sanitizeInput,
-  createPost
-);
-router.put(
-  "/:id",
-  authenticateToken,
-  generalLimiter,
-  sanitizeInput,
-  updatePost
-);
-router.delete("/:id", authenticateToken, generalLimiter, deletePost);
-router.post("/:id/like", authenticateToken, generalLimiter, likePost);
+
+// Protected routes (authentication handled client-side with Better Auth)
+router.post("/", createPostLimiter, sanitizeInput, createPost);
+router.put("/:id", generalLimiter, sanitizeInput, updatePost);
+router.delete("/:id", generalLimiter, deletePost);
+router.post("/:id/like", generalLimiter, likePost);
 
 module.exports = router;

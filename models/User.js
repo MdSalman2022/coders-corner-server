@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
-const userProfileSchema = new mongoose.Schema({
-  userId: { type: String, required: true, unique: true }, // Better Auth user ID
+const userSchema = new mongoose.Schema({
+  betterAuthId: { type: String, required: true, unique: true }, // Better Auth user ID
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   avatar: { type: String },
@@ -14,8 +14,8 @@ const userProfileSchema = new mongoose.Schema({
     linkedin: { type: String },
     twitter: { type: String },
   },
-  followers: [{ type: String }], // Store Better Auth user IDs
-  following: [{ type: String }], // Store Better Auth user IDs
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   preferences: {
     topics: [{ type: String }],
     darkMode: { type: Boolean, default: false },
@@ -29,9 +29,12 @@ const userProfileSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-userProfileSchema.pre("save", function (next) {
+userSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
-module.exports = mongoose.model("UserProfile", userProfileSchema);
+// Prevent model overwrite error
+const User =
+  mongoose.models.User || mongoose.model("User", userSchema, "userinfo");
+module.exports = User;

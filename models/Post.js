@@ -5,7 +5,15 @@ const postSchema = new mongoose.Schema({
   content: { type: String, required: true },
   excerpt: { type: String },
   coverImage: { type: String },
-  author: { type: String, required: true }, // Better Auth user ID
+  images: [
+    {
+      url: { type: String, required: true },
+      publicId: { type: String, required: true },
+      alt: { type: String },
+      caption: { type: String },
+    },
+  ],
+  author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   tags: [{ type: String }],
   category: { type: String, required: true },
   status: { type: String, enum: ["draft", "published"], default: "draft" },

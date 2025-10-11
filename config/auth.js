@@ -55,16 +55,9 @@ export const initializeAuth = async () => {
           clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
         },
       },
+      // Better Auth handles user profiles directly - no need for separate collection
       user: {
         additionalFields: {
-          name: {
-            type: "string",
-            required: false,
-          },
-          avatar: {
-            type: "string",
-            required: false,
-          },
           bio: {
             type: "string",
             required: false,
@@ -138,6 +131,7 @@ export const initializeAuth = async () => {
     });
 
     console.log("✅ Better Auth initialized successfully!");
+    console.log("✅ User profiles handled via Better Auth additionalFields");
     console.log(
       "📍 Base URL:",
       process.env.BASE_URL || "http://localhost:5000"

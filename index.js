@@ -11,6 +11,7 @@ const connectDB = (await import("./config/database.js")).default;
 const userRoutes = (await import("./routes/userRoutes.js")).default;
 const postRoutes = (await import("./routes/postRoutes.js")).default;
 const commentRoutes = (await import("./routes/commentRoutes.js")).default;
+const uploadRoutes = (await import("./routes/uploadRoutes.js")).default;
 const { generalLimiter } = await import("./middleware/rateLimit.js");
 const { securityHeaders } = await import("./middleware/security.js");
 
@@ -56,6 +57,7 @@ app.use(securityHeaders);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/uploads", uploadRoutes);
 
 // Health check
 app.get("/", (req, res) => {

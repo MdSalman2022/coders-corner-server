@@ -8,6 +8,9 @@ const userSchema = new mongoose.Schema({
   bio: { type: String },
   website: { type: String },
   location: { type: String },
+  position: { type: String }, // Job position/title
+  education: { type: String }, // Education background
+  work: { type: String }, // Current work/organization
   skills: [{ type: String }],
   socialLinks: {
     github: { type: String },

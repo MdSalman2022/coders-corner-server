@@ -45,14 +45,31 @@ const getPosts = async (req, res) => {
 
     if (category) query.category = category;
     if (tag) query.tags = { $in: [tag] };
-    if (author) query.author = author;
     if (featured === "true") query.isFeatured = true;
+
+    // Handle author filtering by betterAuthId
+    if (author) {
+      const user = await User.findOne({ betterAuthId: author });
+      if (user) {
+        query.author = user._id;
+      } else {
+        // If user not found, return empty results
+        return res.json({
+          posts: [],
+          totalPages: 0,
+          currentPage: page,
+        });
+      }
+    }
 
     const posts = await Post.find(query)
       .sort({ publishedAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .populate("author", "name avatar betterAuthId");
+      .populate(
+        "author",
+        "name avatar bio betterAuthId location position education work createdAt"
+      );
 
     // Transform the populated data to match frontend expectations
     const postsWithAuthors = posts.map((post) => ({
@@ -61,6 +78,12 @@ const getPosts = async (req, res) => {
         userId: post.author.betterAuthId,
         name: post.author.name,
         avatar: post.author.avatar,
+        bio: post.author.bio,
+        location: post.author.location,
+        position: post.author.position,
+        education: post.author.education,
+        work: post.author.work,
+        joinedAt: post.author.createdAt,
       },
     }));
 
@@ -89,7 +112,10 @@ const getPostById = async (req, res) => {
     await post.save();
 
     // Populate author and comments
-    await post.populate("author", "name avatar bio betterAuthId");
+    await post.populate(
+      "author",
+      "name avatar bio betterAuthId location position education work createdAt"
+    );
 
     // Get comments with populated authors
     const commentsWithAuthors = await Promise.all(
@@ -118,6 +144,11 @@ const getPostById = async (req, res) => {
         name: post.author.name,
         avatar: post.author.avatar,
         bio: post.author.bio,
+        location: post.author.location,
+        position: post.author.position,
+        education: post.author.education,
+        work: post.author.work,
+        joinedAt: post.author.createdAt,
       },
       comments: commentsWithAuthors.filter((c) => c !== null),
     };
@@ -544,7 +575,10 @@ const searchPosts = async (req, res) => {
       ],
     })
       .limit(20)
-      .populate("author", "name avatar betterAuthId");
+      .populate(
+        "author",
+        "name avatar bio betterAuthId location position education work createdAt"
+      );
 
     // Transform the populated data to match frontend expectations
     const postsWithAuthors = posts.map((post) => ({
@@ -553,6 +587,12 @@ const searchPosts = async (req, res) => {
         userId: post.author.betterAuthId,
         name: post.author.name,
         avatar: post.author.avatar,
+        bio: post.author.bio,
+        location: post.author.location,
+        position: post.author.position,
+        education: post.author.education,
+        work: post.author.work,
+        joinedAt: post.author.createdAt,
       },
     }));
 

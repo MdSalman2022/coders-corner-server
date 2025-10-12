@@ -7,6 +7,7 @@ const {
   updateUserRole,
   getPosts,
   updatePostStatus,
+  updatePostFeatured,
   deletePost,
 } = require("../controllers/adminController");
 
@@ -23,6 +24,7 @@ router.put("/users/:userId/role", updateUserRole);
 // Content management
 router.post("/posts", getPosts);
 router.put("/posts/:postId/status", updatePostStatus);
+router.put("/posts/:postId/featured", updatePostFeatured);
 router.delete("/posts/:postId", deletePost);
 
 module.exports = router;

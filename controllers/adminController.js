@@ -229,11 +229,42 @@ const deletePost = async (req, res) => {
   }
 };
 
+// Update post featured status
+const updatePostFeatured = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { isFeatured } = req.body;
+
+    const post = await Post.findByIdAndUpdate(
+      postId,
+      { isFeatured },
+      { new: true }
+    ).populate("author", "name email");
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    res.json({
+      post: {
+        _id: post._id,
+        title: post.title,
+        isFeatured: post.isFeatured,
+        author: post.author,
+      },
+    });
+  } catch (error) {
+    console.error("Update post featured error:", error);
+    res.status(500).json({ message: "Failed to update post featured status" });
+  }
+};
+
 module.exports = {
   getAdminStats,
   getUsers,
   updateUserRole,
   getPosts,
   updatePostStatus,
+  updatePostFeatured,
   deletePost,
 };

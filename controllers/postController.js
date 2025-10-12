@@ -40,12 +40,13 @@ console.log(
 
 const getPosts = async (req, res) => {
   try {
-    const { page = 1, limit = 10, category, tag, author } = req.query;
+    const { page = 1, limit = 10, category, tag, author, featured } = req.query;
     const query = { status: "published" };
 
     if (category) query.category = category;
     if (tag) query.tags = { $in: [tag] };
     if (author) query.author = author;
+    if (featured === "true") query.isFeatured = true;
 
     const posts = await Post.find(query)
       .sort({ publishedAt: -1 })
@@ -138,6 +139,7 @@ const createPost = async (req, res) => {
       userId, // Better Auth user ID
       coverImage,
       images = [], // Array of image objects
+      isFeatured = false, // Add featured flag
     } = req.body;
 
     // Ensure user exists in users collection (auto-create if needed)
@@ -366,6 +368,7 @@ Excerpt:`;
       tags,
       category,
       status,
+      isFeatured,
       readingTime,
     });
 
@@ -395,6 +398,7 @@ const updatePost = async (req, res) => {
       status,
       coverImage,
       images,
+      isFeatured,
     } = req.body;
 
     // Find the post
@@ -425,6 +429,7 @@ const updatePost = async (req, res) => {
     if (status) post.status = status;
     if (coverImage !== undefined) post.coverImage = coverImage;
     if (images !== undefined) post.images = images;
+    if (isFeatured !== undefined) post.isFeatured = isFeatured;
 
     post.updatedAt = new Date();
 

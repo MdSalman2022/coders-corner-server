@@ -12,6 +12,8 @@ const userRoutes = (await import("./routes/userRoutes.js")).default;
 const postRoutes = (await import("./routes/postRoutes.js")).default;
 const commentRoutes = (await import("./routes/commentRoutes.js")).default;
 const uploadRoutes = (await import("./routes/uploadRoutes.js")).default;
+const adminRoutes = (await import("./routes/admin.js")).default;
+const authRoutes = (await import("./routes/auth.js")).default;
 const { generalLimiter } = await import("./middleware/rateLimit.js");
 const { securityHeaders } = await import("./middleware/security.js");
 
@@ -58,6 +60,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/uploads", uploadRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/user", authRoutes); // Changed from /api/auth to avoid conflict
 
 // Health check
 app.get("/", (req, res) => {

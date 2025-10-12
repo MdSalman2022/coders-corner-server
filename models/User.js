@@ -14,6 +14,16 @@ const userSchema = new mongoose.Schema({
     linkedin: { type: String },
     twitter: { type: String },
   },
+  role: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Role",
+    required: true,
+  }, // Role-based access control
+  roleName: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user",
+  }, // Cached for performance
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   preferences: {

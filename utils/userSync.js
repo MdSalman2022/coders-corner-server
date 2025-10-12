@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Role = require("../models/Role");
 const mongoose = require("mongoose");
 
 /**
@@ -29,12 +30,21 @@ async function ensureUserExists(betterAuthId) {
       return null;
     }
 
+    // Get default user role
+    const defaultRole = await Role.findOne({ isDefault: true });
+    if (!defaultRole) {
+      console.error("❌ No default role found! Please run role seeding first.");
+      return null;
+    }
+
     // Create User profile
     user = new User({
       betterAuthId: betterAuthUser.id,
       name: betterAuthUser.name || "User",
       email: betterAuthUser.email,
       avatar: betterAuthUser.image || null,
+      role: defaultRole._id, // Assign default role
+      roleName: defaultRole.name, // Cache role name for performance
       bio: null,
       website: null,
       location: null,
@@ -81,6 +91,13 @@ async function syncAllUsers() {
     let created = 0;
     let skipped = 0;
 
+    // Get default user role
+    const defaultRole = await Role.findOne({ isDefault: true });
+    if (!defaultRole) {
+      console.error("❌ No default role found! Please run role seeding first.");
+      return { created: 0, skipped: 0, total: betterAuthUsers.length };
+    }
+
     for (const betterAuthUser of betterAuthUsers) {
       const exists = await User.findOne({ betterAuthId: betterAuthUser.id });
 
@@ -94,6 +111,8 @@ async function syncAllUsers() {
         name: betterAuthUser.name || "User",
         email: betterAuthUser.email,
         avatar: betterAuthUser.image || null,
+        role: defaultRole._id, // Assign default role
+        roleName: defaultRole.name, // Cache role name for performance
         bio: null,
         website: null,
         location: null,

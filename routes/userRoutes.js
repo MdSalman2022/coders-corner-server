@@ -6,6 +6,7 @@ const {
   followUser,
   unfollowUser,
   getUserStats,
+  getCurrentUser,
 } = require("../controllers/userController");
 const { generalLimiter } = require("../middleware/rateLimit");
 
@@ -13,6 +14,7 @@ const router = express.Router();
 
 // Public routes
 router.post("/", generalLimiter, createUserProfile);
+router.post("/me", generalLimiter, getCurrentUser);
 router.get("/:id", generalLimiter, getUserProfile);
 router.get("/:id/stats", generalLimiter, getUserStats);
 

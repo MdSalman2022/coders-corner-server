@@ -310,6 +310,53 @@ const getUserStats = async (req, res) => {
   }
 };
 
+const getCurrentUser = async (req, res) => {
+  try {
+    const { userId } = req.body; // Get from request body instead of query
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Find user by Better Auth ID and populate role
+    const user = await User.findOne({ betterAuthId: userId }).populate(
+      "role",
+      "name displayName permissions"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return user data with role information
+    res.json({
+      user: {
+        _id: user._id,
+        betterAuthId: user.betterAuthId,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        bio: user.bio,
+        website: user.website,
+        location: user.location,
+        skills: user.skills,
+        socialLinks: user.socialLinks,
+        role: user.role,
+        roleName: user.roleName || (user.role ? user.role.name : "user"),
+        followers: user.followers,
+        following: user.following,
+        preferences: user.preferences,
+        stats: user.stats,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error getting current user:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getUserProfile,
   createUserProfile,
@@ -317,4 +364,5 @@ module.exports = {
   followUser,
   unfollowUser,
   getUserStats,
+  getCurrentUser,
 };

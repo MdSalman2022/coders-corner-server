@@ -10,7 +10,7 @@ const createPostLimiter = rateLimit({
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 300,
   message: "Too many requests, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,

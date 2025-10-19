@@ -118,8 +118,10 @@ export const initializeAuth = async () => {
       session: {
         cookieCache: {
           enabled: true,
-          maxAge: 60 * 5, // 5 minutes
+          maxAge: 60 * 60 * 24 * 7, // 7 days instead of 5 minutes
         },
+        expiresIn: 60 * 60 * 24 * 7, // 7 days
+        updateAge: 60 * 60 * 24, // Update session every 24 hours
       },
       advanced: {
         crossSubDomainCookies: {
@@ -127,6 +129,11 @@ export const initializeAuth = async () => {
         },
         disableCSRFCheck: true, // Disable for development
         defaultRedirectURL: process.env.FRONTEND_URL || "http://localhost:3000",
+        // Add session refresh settings
+        sessionRefresh: {
+          enabled: true,
+          interval: 60 * 60 * 1000, // 1 hour
+        },
       },
     });
 

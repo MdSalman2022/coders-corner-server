@@ -2,8 +2,10 @@ const Post = require("../models/Post");
 const User = require("../models/User");
 const Comment = require("../models/Comment");
 const Notification = require("../models/Notification");
+const Outbox = require("../models/Outbox");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { ensureUserExists } = require("../utils/userSync");
+const feedFanoutService = require("../services/feedFanoutService");
 
 // Function to strip HTML tags and get clean text
 const stripHtml = (html) => {
@@ -410,6 +412,29 @@ Excerpt:`;
       $inc: { "stats.postsCount": 1 },
     });
 
+    // ✅ NEW: Create Outbox event for fanout processing (ONLY for published posts)
+    if (status === "published") {
+      await Outbox.create({
+        eventType: "post_created",
+        payload: {
+          _id: post._id,
+          title: post.title,
+          excerpt: post.excerpt,
+          coverImage: post.coverImage,
+          author: post.author,
+          tags: post.tags,
+          category: post.category,
+          readingTime: post.readingTime,
+          createdAt: post.createdAt,
+          publishedAt: post.publishedAt,
+          isFeatured: post.isFeatured,
+        },
+        status: "pending",
+      });
+
+      console.log(`📤 [createPost] Queued post_created event in Outbox`);
+    }
+
     res.status(201).json(post);
   } catch (error) {
     console.error("Post creation error:", error);
@@ -446,6 +471,10 @@ const updatePost = async (req, res) => {
         .json({ message: "Not authorized to edit this post" });
     }
 
+    // Track if status changed to published (for fanout)
+    const wasPublished = post.status === "published";
+    const isNowPublished = status === "published";
+
     // Update fields
     if (title) post.title = title;
     if (content) {
@@ -465,6 +494,55 @@ const updatePost = async (req, res) => {
     post.updatedAt = new Date();
 
     await post.save();
+
+    // ✅ NEW: Queue Outbox event if post was updated while published
+    if (isNowPublished) {
+      if (!wasPublished) {
+        // Post just became published - queue post_created
+        await Outbox.create({
+          eventType: "post_created",
+          payload: {
+            _id: post._id,
+            title: post.title,
+            excerpt: post.excerpt,
+            coverImage: post.coverImage,
+            author: post.author,
+            tags: post.tags,
+            category: post.category,
+            readingTime: post.readingTime,
+            createdAt: post.createdAt,
+            publishedAt: post.publishedAt,
+            isFeatured: post.isFeatured,
+          },
+          status: "pending",
+        });
+
+        console.log(
+          `📤 [updatePost] Queued post_created event (status changed to published)`
+        );
+      } else {
+        // Post was already published - queue post_updated
+        await Outbox.create({
+          eventType: "post_updated",
+          payload: {
+            _id: post._id,
+            title: post.title,
+            excerpt: post.excerpt,
+            coverImage: post.coverImage,
+            author: post.author,
+            tags: post.tags,
+            category: post.category,
+            readingTime: post.readingTime,
+            createdAt: post.createdAt,
+            publishedAt: post.publishedAt,
+            isFeatured: post.isFeatured,
+          },
+          status: "pending",
+        });
+
+        console.log(`📤 [updatePost] Queued post_updated event`);
+      }
+    }
 
     // Populate author for response
     await post.populate("author", "name avatar betterAuthId");
@@ -514,6 +592,19 @@ const deletePost = async (req, res) => {
       $inc: { "stats.postsCount": -1 },
     });
 
+    // ✅ NEW: Queue Outbox event for deletion
+    if (post.status === "published") {
+      await Outbox.create({
+        eventType: "post_deleted",
+        payload: {
+          postId: id,
+        },
+        status: "pending",
+      });
+
+      console.log(`📤 [deletePost] Queued post_deleted event`);
+    }
+
     res.json({ message: "Post deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -553,6 +644,19 @@ const likePost = async (req, res) => {
           post: post._id,
         });
         await notification.save();
+
+        // ✅ NEW: Queue Outbox event for like
+        await Outbox.create({
+          eventType: "like_added",
+          payload: {
+            postId: post._id,
+            userId: user._id,
+            recipientId: post.author,
+          },
+          status: "pending",
+        });
+
+        console.log(`📤 [likePost] Queued like_added event`);
       }
     }
 

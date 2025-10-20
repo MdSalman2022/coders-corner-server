@@ -55,6 +55,63 @@ export const initializeAuth = async () => {
           clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
         },
       },
+      // Hook to create user profile after signup
+      hooks: {
+        afterCreateUser: async (user) => {
+          try {
+            const User = require("../models/User.js");
+
+            // Check if user profile already exists
+            const existingUser = await User.findOne({ betterAuthId: user.id });
+
+            if (!existingUser) {
+              // Create user profile in userinfo collection
+              const newUser = new User({
+                betterAuthId: user.id,
+                name: user.name || "User",
+                email: user.email,
+                avatar: user.image || null,
+                bio: null,
+                website: null,
+                location: null,
+                skills: [],
+                socialLinks: {
+                  github: null,
+                  linkedin: null,
+                  twitter: null,
+                },
+                followers: [],
+                following: [],
+                preferences: {
+                  topics: [],
+                  darkMode: false,
+                },
+                stats: {
+                  postsCount: 0,
+                  followersCount: 0,
+                  followingCount: 0,
+                },
+                roleName: "user",
+              });
+
+              await newUser.save();
+              console.log(
+                `✅ Hook: Created user profile for ${user.email} (${user.id})`
+              );
+            } else {
+              console.log(
+                `ℹ️  Hook: User profile already exists for ${user.email}`
+              );
+            }
+
+            return user;
+          } catch (error) {
+            console.error(`❌ Hook: Failed to create user profile:`, error);
+            // Don't fail the signup if profile creation fails
+            return user;
+          }
+        },
+      },
       // Better Auth handles user profiles directly - no need for separate collection
       user: {
         additionalFields: {

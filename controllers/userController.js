@@ -203,26 +203,41 @@ const updateUserProfile = async (req, res) => {
 
 const followUser = async (req, res) => {
   try {
-    const targetBetterAuthId = req.params.id;
-    // TODO: Get current user ID from Better Auth session
-    const currentBetterAuthId = req.body.betterAuthId || "placeholder"; // This needs proper implementation
+    const targetUserId = req.params.id; // Target user's Better Auth ID
+    const { userId } = req.body; // Current user's Better Auth ID
 
-    const targetUser = await User.findOne({ betterAuthId: targetBetterAuthId });
-    const currentUser = await User.findOne({
-      betterAuthId: currentBetterAuthId,
-    });
+    // Validate inputs
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Prevent self-follow
+    if (userId === targetUserId) {
+      return res.status(400).json({ message: "You cannot follow yourself" });
+    }
+
+    // Find both users
+    const targetUser = await User.findOne({ betterAuthId: targetUserId });
+    const currentUser = await User.findOne({ betterAuthId: userId });
 
     if (!targetUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    if (!currentUser) {
+      return res.status(404).json({ message: "Current user not found" });
+    }
+
+    // Check if already following
     if (currentUser.following.includes(targetUser._id)) {
       return res.status(400).json({ message: "Already following" });
     }
 
+    // Add follow relationship
     currentUser.following.push(targetUser._id);
     targetUser.followers.push(currentUser._id);
 
+    // Update stats
     currentUser.stats.followingCount = currentUser.following.length;
     targetUser.stats.followersCount = targetUser.followers.length;
 
@@ -238,8 +253,12 @@ const followUser = async (req, res) => {
     });
     await notification.save();
 
-    res.json({ message: "Followed successfully" });
+    res.json({
+      message: "Followed successfully",
+      followersCount: targetUser.stats.followersCount,
+    });
   } catch (error) {
+    console.error("❌ Follow error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -279,7 +298,10 @@ const unfollowUser = async (req, res) => {
     await currentUser.save();
     await targetUser.save();
 
-    res.json({ message: "Unfollowed successfully" });
+    res.json({
+      message: "Unfollowed successfully",
+      followersCount: targetUser.stats.followersCount,
+    });
   } catch (error) {
     console.error("❌ Error unfollowing user:", error);
     res.status(500).json({ message: error.message });

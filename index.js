@@ -62,12 +62,12 @@ app.use(
   })
 );
 
-// Better Auth handler - Mount as middleware
-app.use("/api/auth", toNodeHandler(auth));
-
-// Express middleware
+// Express middleware - MUST come after CORS
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+// Better Auth handler - Mount AFTER express json/urlencoded middleware
+app.use("/api/auth", toNodeHandler(auth));
 
 app.use(generalLimiter);
 app.use(securityHeaders);

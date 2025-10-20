@@ -7,6 +7,7 @@ const {
   unfollowUser,
   getUserStats,
   getCurrentUser,
+  getFollowingUsers,
 } = require("../controllers/userController");
 const { generalLimiter } = require("../middleware/rateLimit");
 
@@ -17,6 +18,7 @@ router.post("/", generalLimiter, createUserProfile);
 router.post("/me", generalLimiter, getCurrentUser);
 router.get("/:id", generalLimiter, getUserProfile);
 router.get("/:id/stats", generalLimiter, getUserStats);
+router.get("/:id/following-users", generalLimiter, getFollowingUsers);
 
 // Protected routes (authentication handled client-side with Better Auth)
 router.put("/profile", generalLimiter, updateUserProfile);

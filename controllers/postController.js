@@ -109,9 +109,12 @@ const getPostById = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Increment views
-    post.views += 1;
-    await post.save();
+    // Only increment views if trackView query param is true
+    // This prevents double counting on page reloads
+    if (req.query.trackView === "true") {
+      post.views += 1;
+      await post.save();
+    }
 
     // Populate author and comments
     await post.populate(
@@ -630,8 +633,10 @@ const likePost = async (req, res) => {
     const userIndex = post.likes.indexOf(user._id);
 
     if (userIndex > -1) {
+      // Remove like
       post.likes.splice(userIndex, 1);
     } else {
+      // Add like
       post.likes.push(user._id);
 
       // Create notification if liking someone else's post
@@ -645,7 +650,7 @@ const likePost = async (req, res) => {
         });
         await notification.save();
 
-        // ✅ NEW: Queue Outbox event for like
+        // Queue Outbox event for like
         await Outbox.create({
           eventType: "like_added",
           payload: {
@@ -661,7 +666,11 @@ const likePost = async (req, res) => {
     }
 
     await post.save();
-    res.json({ likes: post.likes.length });
+
+    res.json({
+      likes: post.likes,
+      likesCount: post.likes.length,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -706,6 +715,81 @@ const searchPosts = async (req, res) => {
   }
 };
 
+const getFollowingPosts = async (req, res) => {
+  try {
+    const { userId } = req.body; // Better Auth ID of current user
+    const { page = 1, limit = 15 } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Find current user
+    const currentUser = await User.findOne({ betterAuthId: userId }).populate(
+      "following"
+    );
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Get posts from followed users
+    const followingUserIds = currentUser.following.map((user) => user._id);
+
+    if (followingUserIds.length === 0) {
+      return res.json({
+        posts: [],
+        totalPages: 0,
+        currentPage: page,
+        message: "You are not following anyone yet",
+      });
+    }
+
+    // Find posts from followed users, sorted by recent
+    const posts = await Post.find({
+      status: "published",
+      author: { $in: followingUserIds },
+    })
+      .sort({ publishedAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .populate(
+        "author",
+        "name avatar bio betterAuthId location position education work createdAt"
+      );
+
+    // Transform the populated data to match frontend expectations
+    const postsWithAuthors = posts.map((post) => ({
+      ...post.toObject(),
+      author: {
+        userId: post.author.betterAuthId,
+        name: post.author.name,
+        avatar: post.author.avatar,
+        bio: post.author.bio,
+        location: post.author.location,
+        position: post.author.position,
+        education: post.author.education,
+        work: post.author.work,
+        joinedAt: post.author.createdAt,
+      },
+    }));
+
+    const total = await Post.countDocuments({
+      status: "published",
+      author: { $in: followingUserIds },
+    });
+
+    res.json({
+      posts: postsWithAuthors,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error("Error fetching following posts:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getPosts,
   getPostById,
@@ -714,4 +798,5 @@ module.exports = {
   deletePost,
   likePost,
   searchPosts,
+  getFollowingPosts,
 };

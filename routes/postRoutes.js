@@ -7,6 +7,7 @@ const {
   deletePost,
   likePost,
   searchPosts,
+  getFollowingPosts,
 } = require("../controllers/postController");
 const {
   createPostLimiter,
@@ -19,6 +20,7 @@ const router = express.Router();
 // Public routes
 router.get("/", generalLimiter, getPosts);
 router.get("/search", generalLimiter, searchPosts);
+router.post("/feed/following", generalLimiter, getFollowingPosts);
 router.get("/:id", generalLimiter, getPostById);
 
 // Protected routes (authentication handled client-side with Better Auth)

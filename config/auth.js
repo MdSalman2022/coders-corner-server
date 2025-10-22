@@ -1,5 +1,3 @@
-import { betterAuth } from "better-auth";
-import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import mongoose from "mongoose";
 
 let authInstance = null;
@@ -35,6 +33,10 @@ export const initializeAuth = async () => {
   );
 
   try {
+    // Dynamic import to avoid ES module issues
+    const { betterAuth } = await import("better-auth");
+    const { mongodbAdapter } = await import("better-auth/adapters/mongodb");
+
     authInstance = betterAuth({
       database: mongodbAdapter(mongoose.connection.db, {
         client: mongoose.connection.getClient(),

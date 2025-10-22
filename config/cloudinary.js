@@ -1,20 +1,22 @@
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name:
-    process.env.CLOUDINARY_CLOUD_NAME || process.env.Cloudinary_CloudName,
-  api_key: process.env.CLOUDINARY_API_KEY || process.env.Cloudinary_API_KEY,
-  api_secret:
-    process.env.CLOUDINARY_API_SECRET || process.env.Cloudinary_API_SECRET,
+  cloud_name: process.env.Cloudinary_CloudName,
+  api_key: process.env.Cloudinary_API_KEY,
+  api_secret: process.env.Cloudinary_API_SECRET,
   secure: true,
 });
 
 console.log("🔧 Cloudinary Configuration:", {
-  cloud_name: process.env.Cloudinary_CloudName || "not set",
-  api_key: process.env.Cloudinary_API_KEY ? "✅ Set" : "❌ Missing",
-  api_secret: process.env.Cloudinary_API_SECRET ? "✅ Set" : "❌ Missing",
+  cloud_name: cloudinary.config().cloud_name || "not set",
+  api_key: cloudinary.config().api_key ? "✅ Set" : "❌ Missing",
+  api_secret: cloudinary.config().api_secret ? "✅ Set" : "❌ Missing",
 });
 
 // Configure multer for memory storage (we'll upload to Cloudinary after)

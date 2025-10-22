@@ -4,6 +4,10 @@ import Comment from "../models/Comment.js";
 import Notification from "../models/Notification.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ensureUserExists } from "../utils/userSync.js";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Function to strip HTML tags and get clean text
 const stripHtml = (html) => {

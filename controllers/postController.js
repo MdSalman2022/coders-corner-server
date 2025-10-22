@@ -4,6 +4,22 @@ import Comment from "../models/Comment.js";
 import Notification from "../models/Notification.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ensureUserExists } from "../utils/userSync.js";
+import {
+  GOOGLE_GEMINI_API_KEY,
+  POSTS_DEFAULT_LIMIT,
+  EXCERPT_LENGTH,
+  READING_TIME_WORDS_PER_MINUTE,
+  AI_EXCERPT_MAX_LENGTH,
+  AI_EXCERPT_MAX_TOKENS,
+  AI_TIMEOUT_MS,
+  GEMINI_MODEL,
+  GEMINI_TEMPERATURE,
+  GEMINI_TOP_P,
+  GEMINI_TOP_K,
+  GEMINI_CONTENT_PREVIEW_LENGTH,
+  USER_FEATURED_POSTS_LIMIT,
+  ENABLE_AI_FEATURES,
+} from "../config/config.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -22,24 +38,18 @@ const stripHtml = (html) => {
     .trim();
 };
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-console.log("🔧 Gemini AI Configuration:");
-console.log("  API Key present:", !!process.env.GEMINI_API_KEY);
-console.log(
-  "  API Key length:",
-  process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0
-);
-console.log(
-  "  API Key starts with:",
-  process.env.GEMINI_API_KEY
-    ? process.env.GEMINI_API_KEY.substring(0, 10) + "..."
-    : "none"
-);
+const genAI = new GoogleGenerativeAI(GOOGLE_GEMINI_API_KEY);
 
 const getPosts = async (req, res) => {
   try {
-    const { page = 1, limit = 10, category, tag, author, featured } = req.query;
+    const {
+      page = 1,
+      limit = POSTS_DEFAULT_LIMIT,
+      category,
+      tag,
+      author,
+      featured,
+    } = req.query;
     const query = { status: "published" };
 
     if (category) query.category = category;
@@ -173,39 +183,42 @@ const createPost = async (req, res) => {
     }
 
     const wordCount = content.split(/\s+/).length;
-    let readingTime = Math.max(1, Math.ceil(wordCount / 200));
+    let readingTime = Math.max(
+      1,
+      Math.ceil(wordCount / READING_TIME_WORDS_PER_MINUTE)
+    );
 
-    let excerpt = stripHtml(content).substring(0, 150).trim();
-    if (stripHtml(content).length > 150) {
+    let excerpt = stripHtml(content).substring(0, EXCERPT_LENGTH).trim();
+    if (stripHtml(content).length > EXCERPT_LENGTH) {
       excerpt += "...";
     }
 
     try {
-      if (process.env.GEMINI_API_KEY) {
+      if (ENABLE_AI_FEATURES && GOOGLE_GEMINI_API_KEY) {
         console.log("🤖 Starting AI excerpt generation...");
 
         const model = genAI.getGenerativeModel({
-          model: "gemini-2.5-flash-lite",
+          model: GEMINI_MODEL,
           generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 150,
-            topP: 0.8,
-            topK: 40,
+            temperature: GEMINI_TEMPERATURE,
+            maxOutputTokens: AI_EXCERPT_MAX_TOKENS,
+            topP: GEMINI_TOP_P,
+            topK: GEMINI_TOP_K,
           },
         });
 
         const cleanContent = stripHtml(content);
         console.log("📝 Clean content length:", cleanContent.length);
 
-        const excerptPrompt = `Write a concise excerpt for this blog post. Keep it under 80 words (about 100 tokens).
+        const excerptPrompt = `Write a concise excerpt for this blog post. Keep it under ${AI_EXCERPT_MAX_LENGTH} words (about ${AI_EXCERPT_MAX_TOKENS} tokens).
 
 Title: "${title}"
 
-Content: ${cleanContent.substring(0, 400)}
+Content: ${cleanContent.substring(0, GEMINI_CONTENT_PREVIEW_LENGTH)}
 
 Requirements:
 - 2-3 sentences maximum
-- Under 80 words total
+- Under ${AI_EXCERPT_MAX_LENGTH} words total
 - Engaging and compelling
 - No HTML or formatting
 - Summarize the main idea
@@ -219,8 +232,11 @@ Excerpt:`;
           model.generateContent(excerptPrompt),
           new Promise((_, reject) =>
             setTimeout(
-              () => reject(new Error("AI timeout after 15 seconds")),
-              15000
+              () =>
+                reject(
+                  new Error(`AI timeout after ${AI_TIMEOUT_MS / 1000} seconds`)
+                ),
+              AI_TIMEOUT_MS
             )
           ),
         ]);
@@ -538,7 +554,7 @@ const searchPosts = async (req, res) => {
         { tags: { $in: [new RegExp(q, "i")] } },
       ],
     })
-      .limit(20)
+      .limit(USER_FEATURED_POSTS_LIMIT)
       .populate(
         "author",
         "name avatar bio betterAuthId location position education work createdAt"

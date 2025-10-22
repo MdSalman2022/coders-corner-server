@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
+import { MONGODB_URI } from "./config.js";
 
 const connectDB = async () => {
   try {
-    const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.cwkrobe.mongodb.net/CodersCorner?retryWrites=true&w=majority`;
+    const uri = MONGODB_URI;
     await mongoose.connect(uri);
     console.log("MongoDB connected");
   } catch (error) {

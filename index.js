@@ -7,6 +7,7 @@ import { toNodeHandler } from "better-auth/node";
 
 dotenv.config();
 
+import { NODE_ENV, PORT, CORS_ORIGINS } from "./config/config.js";
 import connectDB from "./config/database.js";
 import userRoutes from "./routes/userRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
@@ -22,7 +23,6 @@ import { initializeAuth } from "./config/auth.js";
 
 const app = express();
 app.set("trust proxy", 1);
-const port = process.env.PORT || 5000;
 
 (async () => {
   try {
@@ -38,11 +38,7 @@ const port = process.env.PORT || 5000;
 
     app.use(
       cors({
-        origin: [
-          "http://localhost:3000",
-          "http://localhost:5000",
-          "https://coders-corner-client.vercel.app",
-        ],
+        origin: CORS_ORIGINS,
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: [
@@ -89,8 +85,9 @@ const port = process.env.PORT || 5000;
       res.status(500).send("Something broke!");
     });
 
-    app.listen(port, () => {
-      console.log(`Coders Corner server running on port ${port}`);
+    app.listen(PORT, () => {
+      console.log(`🚀 Coders Corner server running on port ${PORT}`);
+      console.log(`📍 Environment: ${NODE_ENV}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

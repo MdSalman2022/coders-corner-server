@@ -2,6 +2,11 @@ import User from "../models/User.js";
 import Post from "../models/Post.js";
 import Role from "../models/Role.js";
 import { requireAdmin } from "../middleware/auth.js";
+import {
+  POSTS_ADMIN_LIMIT,
+  USER_STATS_ADMIN_LIMIT,
+  POSTS_DEFAULT_LIMIT,
+} from "../config/config.js";
 
 const getAdminStats = async (req, res) => {
   try {
@@ -12,12 +17,12 @@ const getAdminStats = async (req, res) => {
 
     const recentUsers = await User.find()
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(USER_STATS_ADMIN_LIMIT)
       .select("name email createdAt");
 
     const recentPosts = await Post.find()
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(POSTS_ADMIN_LIMIT)
       .populate("author", "name")
       .select("title status createdAt author");
 
@@ -41,7 +46,7 @@ const getAdminStats = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "" } = req.body;
+    const { page = 1, limit = POSTS_DEFAULT_LIMIT, search = "" } = req.body;
 
     const query = search
       ? {
@@ -122,7 +127,12 @@ const updateUserRole = async (req, res) => {
 
 const getPosts = async (req, res) => {
   try {
-    const { page = 1, limit = 10, status = "all", search = "" } = req.body;
+    const {
+      page = 1,
+      limit = POSTS_DEFAULT_LIMIT,
+      status = "all",
+      search = "",
+    } = req.body;
 
     const query = {};
     if (status !== "all") {

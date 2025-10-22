@@ -1,6 +1,7 @@
 import helmet from "helmet";
 import createDOMPurify from "dompurify";
 import { JSDOM } from "jsdom";
+import { SECURITY_HEADERS } from "../config/config.js";
 
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
@@ -26,6 +27,7 @@ const securityHeaders = helmet({
       connectSrc: ["'self'", "https://res.cloudinary.com"],
     },
   },
+  ...SECURITY_HEADERS,
 });
 
 export { sanitizeInput, securityHeaders };

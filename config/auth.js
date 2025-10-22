@@ -1,4 +1,14 @@
 import mongoose from "mongoose";
+import {
+  BETTER_AUTH_SECRET,
+  SERVER_URL,
+  CLIENT_URL,
+  CORS_ORIGINS,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET,
+} from "./config.js";
 
 let authInstance = null;
 
@@ -9,28 +19,8 @@ export const initializeAuth = async () => {
   }
 
   if (mongoose.connection.readyState !== 1) {
-    throw new Error(
-      "Database not connected. Call initializeAuth() after connectDB()"
-    );
+    throw new Error("Database not connected.");
   }
-
-  console.log("✅ Better Auth: Initializing with MongoDB connection");
-  console.log("🗄️  Database name:", mongoose.connection.db?.databaseName);
-
-  console.log("🔧 Better Auth: Environment variables loaded:");
-  console.log(
-    "  GOOGLE_CLIENT_ID:",
-    process.env.GOOGLE_CLIENT_ID ? "✅ Set" : "❌ Missing"
-  );
-  console.log(
-    "  GITHUB_CLIENT_ID:",
-    process.env.GITHUB_CLIENT_ID ? "✅ Set" : "❌ Missing"
-  );
-  console.log(
-    "  BETTER_AUTH_SECRET:",
-    process.env.BETTER_AUTH_SECRET ? "✅ Set" : "❌ Missing"
-  );
-
   try {
     const { betterAuth } = await import("better-auth");
     const { mongodbAdapter } = await import("better-auth/adapters/mongodb");
@@ -47,12 +37,12 @@ export const initializeAuth = async () => {
       },
       socialProviders: {
         google: {
-          clientId: process.env.GOOGLE_CLIENT_ID || "",
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+          clientId: GOOGLE_CLIENT_ID || "",
+          clientSecret: GOOGLE_CLIENT_SECRET || "",
         },
         github: {
-          clientId: process.env.GITHUB_CLIENT_ID || "",
-          clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+          clientId: GITHUB_CLIENT_ID || "",
+          clientSecret: GITHUB_CLIENT_SECRET || "",
         },
       },
 
@@ -110,15 +100,9 @@ export const initializeAuth = async () => {
           },
         },
       },
-      baseURL: process.env.BASE_URL || "http://localhost:5000",
-      secret:
-        process.env.BETTER_AUTH_SECRET ||
-        "your-secret-key-change-in-production",
-      trustedOrigins: [
-        "https://coders-corner-client.vercel.app",
-        "http://localhost:3000",
-        "http://localhost:5000",
-      ],
+      baseURL: SERVER_URL,
+      secret: BETTER_AUTH_SECRET,
+      trustedOrigins: CORS_ORIGINS,
       session: {
         cookieCache: {
           enabled: true,
@@ -132,7 +116,7 @@ export const initializeAuth = async () => {
           enabled: false,
         },
         disableCSRFCheck: true,
-        defaultRedirectURL: process.env.FRONTEND_URL || "http://localhost:3000",
+        defaultRedirectURL: CLIENT_URL,
 
         sessionRefresh: {
           enabled: true,
@@ -143,10 +127,8 @@ export const initializeAuth = async () => {
 
     console.log("✅ Better Auth initialized successfully!");
     console.log("✅ User profiles handled via Better Auth additionalFields");
-    console.log(
-      "📍 Base URL:",
-      process.env.BASE_URL || "http://localhost:5000"
-    );
+    console.log("📍 Base URL:", SERVER_URL);
+    console.log("📍 Client URL:", CLIENT_URL);
 
     return authInstance;
   } catch (error) {

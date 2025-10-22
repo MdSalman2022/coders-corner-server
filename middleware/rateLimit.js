@@ -1,8 +1,14 @@
 import rateLimit from "express-rate-limit";
+import {
+  RATE_LIMIT_WINDOW_MS,
+  RATE_LIMIT_MAX_REQUESTS,
+  GENERAL_RATE_LIMIT_WINDOW_MS,
+  GENERAL_RATE_LIMIT_MAX_REQUESTS,
+} from "../config/config.js";
 
 const createPostLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX_REQUESTS,
   message: "Too many posts created, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
@@ -10,8 +16,8 @@ const createPostLimiter = rateLimit({
 });
 
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
+  windowMs: GENERAL_RATE_LIMIT_WINDOW_MS,
+  max: GENERAL_RATE_LIMIT_MAX_REQUESTS,
   message: "Too many requests, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,

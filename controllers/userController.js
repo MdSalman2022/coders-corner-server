@@ -195,16 +195,28 @@ const updateUserProfile = async (req, res) => {
 const followUser = async (req, res) => {
   try {
     const targetBetterAuthId = req.params.id;
+    const { userId } = req.body;
 
-    const currentBetterAuthId = req.body.betterAuthId || "placeholder";
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
 
-    const targetUser = await User.findOne({ betterAuthId: targetBetterAuthId });
-    const currentUser = await User.findOne({
-      betterAuthId: currentBetterAuthId,
+    console.log("🔄 Follow request:", {
+      targetBetterAuthId,
+      currentUserId: userId,
     });
 
+    const targetUser = await User.findOne({ betterAuthId: targetBetterAuthId });
+    const currentUser = await User.findOne({ betterAuthId: userId });
+
     if (!targetUser) {
-      return res.status(404).json({ message: "User not found" });
+      console.log("❌ Target user not found:", targetBetterAuthId);
+      return res.status(404).json({ message: "Target user not found" });
+    }
+
+    if (!currentUser) {
+      console.log("❌ Current user not found:", userId);
+      return res.status(404).json({ message: "Current user not found" });
     }
 
     if (currentUser.following.includes(targetUser._id)) {
@@ -220,6 +232,11 @@ const followUser = async (req, res) => {
     await currentUser.save();
     await targetUser.save();
 
+    console.log("✅ Follow successful:", {
+      current: currentUser.name,
+      target: targetUser.name,
+    });
+
     const notification = new Notification({
       recipient: targetUser._id,
       sender: currentUser._id,
@@ -230,6 +247,7 @@ const followUser = async (req, res) => {
 
     res.json({ message: "Followed successfully" });
   } catch (error) {
+    console.error("❌ Error following user:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -306,10 +324,10 @@ const getCurrentUser = async (req, res) => {
       return res.status(400).json({ message: "User ID is required" });
     }
 
-    const user = await User.findOne({ betterAuthId: userId }).populate(
-      "role",
-      "name displayName permissions"
-    );
+    const user = await User.findOne({ betterAuthId: userId })
+      .populate("role", "name displayName permissions")
+      .populate("followers", "name avatar betterAuthId email")
+      .populate("following", "name avatar betterAuthId email");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -343,6 +361,86 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+const getFollowingUsers = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Find user by MongoDB _id or betterAuthId
+    let user = await User.findById(userId).populate(
+      "following",
+      "name avatar betterAuthId email"
+    );
+
+    if (!user) {
+      user = await User.findOne({ betterAuthId: userId }).populate(
+        "following",
+        "name avatar betterAuthId email"
+      );
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log("✅ Fetched following users:", {
+      userId: user.betterAuthId,
+      count: user.following.length,
+    });
+
+    res.json({
+      following: user.following || [],
+      count: user.following?.length || 0,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching following users:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getFollowerUsers = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Find user by MongoDB _id or betterAuthId
+    let user = await User.findById(userId).populate(
+      "followers",
+      "name avatar betterAuthId email"
+    );
+
+    if (!user) {
+      user = await User.findOne({ betterAuthId: userId }).populate(
+        "followers",
+        "name avatar betterAuthId email"
+      );
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log("✅ Fetched follower users:", {
+      userId: user.betterAuthId,
+      count: user.followers.length,
+    });
+
+    res.json({
+      followers: user.followers || [],
+      count: user.followers?.length || 0,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching follower users:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export {
   getUserProfile,
   createUserProfile,
@@ -351,4 +449,6 @@ export {
   unfollowUser,
   getUserStats,
   getCurrentUser,
+  getFollowingUsers,
+  getFollowerUsers,
 };

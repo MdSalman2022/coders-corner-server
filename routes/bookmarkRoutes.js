@@ -30,8 +30,6 @@ router.get("/ids", async (req, res) => {
 
     const postIds = bookmarks.map((b) => b.postId.toString());
 
-    console.log(`✅ Loaded ${postIds.length} bookmark IDs for user ${userId}`);
-
     res.status(200).json({
       success: true,
       postIds,

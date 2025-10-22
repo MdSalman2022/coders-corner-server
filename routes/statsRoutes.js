@@ -66,6 +66,16 @@ router.get("/posts", async (req, res) => {
       });
     }
 
+    // Get user by Better Auth ID
+    console.log("🔍 Looking up user by Better Auth ID:", userId);
+    const user = await ensureUserExists(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
     const now = new Date();
     let dateFrom = new Date();
 

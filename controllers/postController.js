@@ -581,6 +581,105 @@ const searchPosts = async (req, res) => {
   }
 };
 
+const getTrendingTags = async (req, res) => {
+  try {
+    // Get all published posts and aggregate tags
+    const posts = await Post.find({ status: "published" })
+      .select("tags")
+      .lean();
+
+    // Count tag occurrences
+    const tagCounts = {};
+    posts.forEach((post) => {
+      post.tags.forEach((tag) => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    });
+
+    // Sort by count and convert to array
+    const trendingTags = Object.entries(tagCounts)
+      .sort(([, a], [, b]) => b - a)
+      .map(([tag]) => tag);
+
+    res.json(trendingTags);
+  } catch (error) {
+    console.error("Error fetching trending tags:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getFollowingFeed = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const { limit = POSTS_DEFAULT_LIMIT, page = 1 } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    console.log("🔄 Fetching following feed for user:", userId);
+
+    // Find current user
+    let currentUser = await User.findOne({ betterAuthId: userId });
+
+    if (!currentUser) {
+      currentUser = await User.findById(userId);
+    }
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log("✅ Current user found:", currentUser.name);
+    console.log("📋 Following count:", currentUser.following.length);
+
+    // Get posts from users the current user is following
+    const posts = await Post.find({
+      author: { $in: currentUser.following },
+      status: "published",
+    })
+      .sort({ publishedAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .populate(
+        "author",
+        "name avatar bio betterAuthId location position education work createdAt"
+      );
+
+    const postsWithAuthors = posts.map((post) => ({
+      ...post.toObject(),
+      author: {
+        userId: post.author.betterAuthId,
+        name: post.author.name,
+        avatar: post.author.avatar,
+        bio: post.author.bio,
+        location: post.author.location,
+        position: post.author.position,
+        education: post.author.education,
+        work: post.author.work,
+        joinedAt: post.author.createdAt,
+      },
+    }));
+
+    const total = await Post.countDocuments({
+      author: { $in: currentUser.following },
+      status: "published",
+    });
+
+    console.log("✅ Following feed fetched:", postsWithAuthors.length, "posts");
+
+    res.json({
+      posts: postsWithAuthors,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      total,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching following feed:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export {
   getPosts,
   getPostById,
@@ -589,4 +688,6 @@ export {
   deletePost,
   likePost,
   searchPosts,
+  getTrendingTags,
+  getFollowingFeed,
 };

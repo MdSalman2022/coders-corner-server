@@ -116,7 +116,11 @@ export const initializeAuth = async () => {
       secret:
         process.env.BETTER_AUTH_SECRET ||
         "your-secret-key-change-in-production",
-      trustedOrigins: ["http://localhost:3000", "http://localhost:5000"],
+      trustedOrigins: [
+        "https://coders-corner-client.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:5000",
+      ],
       session: {
         cookieCache: {
           enabled: true,

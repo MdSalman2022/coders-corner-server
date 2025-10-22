@@ -6,6 +6,7 @@ const createPostLimiter = rateLimit({
   message: "Too many posts created, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 const generalLimiter = rateLimit({
@@ -14,6 +15,7 @@ const generalLimiter = rateLimit({
   message: "Too many requests, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 export { createPostLimiter, generalLimiter };

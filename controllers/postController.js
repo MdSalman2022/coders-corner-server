@@ -537,8 +537,15 @@ const likePost = async (req, res) => {
     }
 
     await post.save();
-    res.json({ likes: post.likes.length });
+    console.log("✅ Like toggled:", {
+      postId: post._id,
+      userId: user._id,
+      isLiked: userIndex === -1,
+      totalLikes: post.likes.length,
+    });
+    res.json({ likes: post.likes, likesCount: post.likes.length });
   } catch (error) {
+    console.error("❌ Error liking post:", error);
     res.status(500).json({ message: error.message });
   }
 };

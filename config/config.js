@@ -23,9 +23,9 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 // cloudinary
-const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || "";
-const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || "";
-const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || "";
+const CLOUDINARY_CLOUD_NAME = process.env.Cloudinary_CloudName || "";
+const CLOUDINARY_API_KEY = process.env.Cloudinary_API_KEY || "";
+const CLOUDINARY_API_SECRET = process.env.Cloudinary_API_SECRET || "";
 
 // gemini
 const GOOGLE_GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY || "";

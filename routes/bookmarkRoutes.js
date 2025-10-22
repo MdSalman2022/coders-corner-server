@@ -1,8 +1,8 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const Bookmark = require("../models/Bookmark");
-const Post = require("../models/Post");
-const { ensureUserExists } = require("../utils/userSync");
+import Bookmark from "../models/Bookmark.js";
+import Post from "../models/Post.js";
+import { ensureUserExists } from "../utils/userSync.js";
 
 // OPTIMIZED: Get only bookmark post IDs (lightweight)
 router.get("/ids", async (req, res) => {
@@ -259,4 +259,4 @@ router.delete("/:postId", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

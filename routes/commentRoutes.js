@@ -1,13 +1,13 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   getComments,
   createComment,
   updateComment,
   deleteComment,
   likeComment,
-} = require("../controllers/commentController");
-const { generalLimiter } = require("../middleware/rateLimit");
-const { sanitizeInput } = require("../middleware/security");
+} from "../controllers/commentController.js";
+import { generalLimiter } from "../middleware/rateLimit.js";
+import { sanitizeInput } from "../middleware/security.js";
 
 const router = express.Router();
 
@@ -26,4 +26,4 @@ router.delete("/:commentId", generalLimiter, deleteComment);
 // Like/unlike a comment
 router.post("/:commentId/like", generalLimiter, likeComment);
 
-module.exports = router;
+export default router;

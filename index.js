@@ -1,23 +1,24 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const dotenv = require("dotenv");
-const mongoose = require("mongoose");
-const { toNodeHandler } = require("better-auth/node");
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import { toNodeHandler } from "better-auth/node";
 
 dotenv.config();
 
-const connectDB = require("./config/database.js");
-const userRoutes = require("./routes/userRoutes.js");
-const postRoutes = require("./routes/postRoutes.js");
-const commentRoutes = require("./routes/commentRoutes.js");
-const uploadRoutes = require("./routes/uploadRoutes.js");
-const adminRoutes = require("./routes/admin.js");
-const authRoutes = require("./routes/auth.js");
-const bookmarkRoutes = require("./routes/bookmarkRoutes.js");
-const statsRoutes = require("./routes/statsRoutes.js");
-const { generalLimiter } = require("./middleware/rateLimit.js");
-const { securityHeaders } = require("./middleware/security.js");
+import connectDB from "./config/database.js";
+import userRoutes from "./routes/userRoutes.js";
+import postRoutes from "./routes/postRoutes.js";
+import commentRoutes from "./routes/commentRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
+import adminRoutes from "./routes/admin.js";
+import authRoutes from "./routes/auth.js";
+import bookmarkRoutes from "./routes/bookmarkRoutes.js";
+import statsRoutes from "./routes/statsRoutes.js";
+import { generalLimiter } from "./middleware/rateLimit.js";
+import { securityHeaders } from "./middleware/security.js";
+import { initializeAuth } from "./config/auth.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -28,7 +29,6 @@ const port = process.env.PORT || 5000;
     await connectDB();
 
     // Initialize Better Auth after database connection
-    const { initializeAuth } = await import("./config/auth.js");
     const auth = await initializeAuth();
 
     console.log(

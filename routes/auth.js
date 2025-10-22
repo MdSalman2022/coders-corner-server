@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const User = require("../models/User");
+import User from "../models/User.js";
 
 // Get current user data (for auth context)
 router.post("/me", async (req, res) => {
@@ -35,4 +35,4 @@ router.post("/me", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

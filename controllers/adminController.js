@@ -1,7 +1,7 @@
-const User = require("../models/User");
-const Post = require("../models/Post");
-const Role = require("../models/Role");
-const { requireAdmin } = require("../middleware/auth");
+import User from "../models/User.js";
+import Post from "../models/Post.js";
+import Role from "../models/Role.js";
+import { requireAdmin } from "../middleware/auth.js";
 
 // Get admin dashboard stats
 const getAdminStats = async (req, res) => {
@@ -259,7 +259,7 @@ const updatePostFeatured = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getAdminStats,
   getUsers,
   updateUserRole,

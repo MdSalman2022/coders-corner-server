@@ -1,12 +1,13 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   uploadSingle,
   uploadMultiple,
   uploadToCloudinary,
   deleteImage,
   getPublicIdFromUrl,
-} = require("../config/cloudinary");
-const { generalLimiter } = require("../middleware/rateLimit");
+  cloudinary,
+} from "../config/cloudinary.js";
+import { generalLimiter } from "../middleware/rateLimit.js";
 
 const router = express.Router();
 
@@ -150,8 +151,7 @@ router.get("/info/:publicId", generalLimiter, async (req, res) => {
     }
 
     // Get image info from Cloudinary
-    const result =
-      await require("../config/cloudinary").cloudinary.api.resource(publicId);
+    const result = await cloudinary.api.resource(publicId);
 
     res.json({
       success: true,
@@ -173,4 +173,4 @@ router.get("/info/:publicId", generalLimiter, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

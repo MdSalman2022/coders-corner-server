@@ -1,5 +1,5 @@
-const User = require("../models/User");
-const Role = require("../models/Role");
+import User from "../models/User.js";
+import Role from "../models/Role.js";
 
 // Permission constants
 const PERMISSIONS = {
@@ -152,7 +152,7 @@ const requireAdmin = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export {
   getUserFromRequest,
   PERMISSIONS,
   hasPermission,

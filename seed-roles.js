@@ -1,7 +1,8 @@
-const mongoose = require("mongoose");
-const Role = require("./models/Role");
+import mongoose from "mongoose";
+import Role from "./models/Role.js";
 
-require("dotenv").config();
+import dotenv from "dotenv";
+dotenv.config();
 
 // Connect to MongoDB
 const connectDB = async () => {

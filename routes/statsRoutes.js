@@ -1,8 +1,8 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const Post = require("../models/Post");
-const User = require("../models/User");
-const { ensureUserExists } = require("../utils/userSync");
+import Post from "../models/Post.js";
+import User from "../models/User.js";
+import { ensureUserExists } from "../utils/userSync.js";
 
 // Get user overall stats
 router.get("/user/:userId", async (req, res) => {
@@ -171,4 +171,4 @@ router.post("/views/:postId", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,10 +1,10 @@
-const { betterAuth } = require("better-auth");
-const { mongodbAdapter } = require("better-auth/adapters/mongodb");
-const mongoose = require("mongoose");
+import { betterAuth } from "better-auth";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import mongoose from "mongoose";
 
 let authInstance = null;
 
-const initializeAuth = async () => {
+export const initializeAuth = async () => {
   if (authInstance) {
     console.log("♻️  Reusing existing Better Auth instance");
     return authInstance;
@@ -151,4 +151,4 @@ const initializeAuth = async () => {
   }
 };
 
-module.exports = { initializeAuth, authInstance };
+export { authInstance };

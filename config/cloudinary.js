@@ -1,5 +1,5 @@
-const cloudinary = require("cloudinary").v2;
-const multer = require("multer");
+import { v2 as cloudinary } from "cloudinary";
+import multer from "multer";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -102,7 +102,7 @@ const getPublicIdFromUrl = (url) => {
   return matches ? matches[1] : null;
 };
 
-module.exports = {
+export {
   cloudinary,
   uploadSingle,
   uploadMultiple,

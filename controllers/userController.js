@@ -1,7 +1,7 @@
-const mongoose = require("mongoose");
-const User = require("../models/User");
-const Post = require("../models/Post");
-const Notification = require("../models/Notification");
+import mongoose from "mongoose";
+import User from "../models/User.js";
+import Post from "../models/Post.js";
+import Notification from "../models/Notification.js";
 
 const createUserProfile = async (req, res) => {
   try {
@@ -357,7 +357,7 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getUserProfile,
   createUserProfile,
   updateUserProfile,

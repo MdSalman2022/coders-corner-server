@@ -1,9 +1,9 @@
-const Post = require("../models/Post");
-const User = require("../models/User");
-const Comment = require("../models/Comment");
-const Notification = require("../models/Notification");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { ensureUserExists } = require("../utils/userSync");
+import Post from "../models/Post.js";
+import User from "../models/User.js";
+import Comment from "../models/Comment.js";
+import Notification from "../models/Notification.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { ensureUserExists } from "../utils/userSync.js";
 
 // Function to strip HTML tags and get clean text
 const stripHtml = (html) => {
@@ -602,7 +602,7 @@ const searchPosts = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getPosts,
   getPostById,
   createPost,

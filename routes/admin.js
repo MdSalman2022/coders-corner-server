@@ -1,7 +1,7 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { requireAdmin } = require("../middleware/auth");
-const {
+import { requireAdmin } from "../middleware/auth.js";
+import {
   getAdminStats,
   getUsers,
   updateUserRole,
@@ -9,7 +9,7 @@ const {
   updatePostStatus,
   updatePostFeatured,
   deletePost,
-} = require("../controllers/adminController");
+} from "../controllers/adminController.js";
 
 // Apply admin middleware to all routes
 router.use(requireAdmin);
@@ -27,4 +27,4 @@ router.put("/posts/:postId/status", updatePostStatus);
 router.put("/posts/:postId/featured", updatePostFeatured);
 router.delete("/posts/:postId", deletePost);
 
-module.exports = router;
+export default router;

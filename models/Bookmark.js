@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const bookmarkSchema = new mongoose.Schema(
   {
@@ -19,4 +19,4 @@ const bookmarkSchema = new mongoose.Schema(
 // Ensure a user can't bookmark the same post twice
 bookmarkSchema.index({ userId: 1, postId: 1 }, { unique: true });
 
-module.exports = mongoose.model("Bookmark", bookmarkSchema);
+export default mongoose.model("Bookmark", bookmarkSchema);

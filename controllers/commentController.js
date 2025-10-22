@@ -1,8 +1,8 @@
-const Comment = require("../models/Comment");
-const Post = require("../models/Post");
-const User = require("../models/User");
-const Notification = require("../models/Notification");
-const { ensureUserExists } = require("../utils/userSync");
+import Comment from "../models/Comment.js";
+import Post from "../models/Post.js";
+import User from "../models/User.js";
+import Notification from "../models/Notification.js";
+import { ensureUserExists } from "../utils/userSync.js";
 
 const getComments = async (req, res) => {
   try {
@@ -191,7 +191,7 @@ const likeComment = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getComments,
   createComment,
   updateComment,

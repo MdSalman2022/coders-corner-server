@@ -1,5 +1,5 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   getPosts,
   getPostById,
   createPost,
@@ -7,12 +7,9 @@ const {
   deletePost,
   likePost,
   searchPosts,
-} = require("../controllers/postController");
-const {
-  createPostLimiter,
-  generalLimiter,
-} = require("../middleware/rateLimit");
-const { sanitizeInput } = require("../middleware/security");
+} from "../controllers/postController.js";
+import { createPostLimiter, generalLimiter } from "../middleware/rateLimit.js";
+import { sanitizeInput } from "../middleware/security.js";
 
 const router = express.Router();
 
@@ -27,4 +24,4 @@ router.put("/:id", generalLimiter, sanitizeInput, updatePost);
 router.delete("/:id", generalLimiter, deletePost);
 router.post("/:id/like", generalLimiter, likePost);
 
-module.exports = router;
+export default router;

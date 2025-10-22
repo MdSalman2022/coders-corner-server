@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const roleSchema = new mongoose.Schema(
   {
@@ -40,7 +40,4 @@ const roleSchema = new mongoose.Schema(
   }
 );
 
-// Index for performance
-roleSchema.index({ name: 1 });
-
-module.exports = mongoose.model("Role", roleSchema);
+export default mongoose.model("Role", roleSchema);

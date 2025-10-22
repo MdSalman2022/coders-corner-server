@@ -1,6 +1,6 @@
-const helmet = require("helmet");
-const createDOMPurify = require("dompurify");
-const { JSDOM } = require("jsdom");
+import helmet from "helmet";
+import createDOMPurify from "dompurify";
+import { JSDOM } from "jsdom";
 
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
@@ -28,4 +28,4 @@ const securityHeaders = helmet({
   },
 });
 
-module.exports = { sanitizeInput, securityHeaders };
+export { sanitizeInput, securityHeaders };

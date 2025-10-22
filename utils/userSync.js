@@ -1,6 +1,6 @@
-const User = require("../models/User");
-const Role = require("../models/Role");
-const mongoose = require("mongoose");
+import User from "../models/User.js";
+import Role from "../models/Role.js";
+import mongoose from "mongoose";
 
 /**
  * Ensures a User profile exists in the users collection
@@ -152,7 +152,4 @@ async function syncAllUsers() {
   }
 }
 
-module.exports = {
-  ensureUserExists,
-  syncAllUsers,
-};
+export { ensureUserExists, syncAllUsers };

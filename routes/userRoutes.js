@@ -1,5 +1,5 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   getUserProfile,
   createUserProfile,
   updateUserProfile,
@@ -7,8 +7,8 @@ const {
   unfollowUser,
   getUserStats,
   getCurrentUser,
-} = require("../controllers/userController");
-const { generalLimiter } = require("../middleware/rateLimit");
+} from "../controllers/userController.js";
+import { generalLimiter } from "../middleware/rateLimit.js";
 
 const router = express.Router();
 
@@ -23,4 +23,4 @@ router.put("/profile", generalLimiter, updateUserProfile);
 router.post("/:id/follow", generalLimiter, followUser);
 router.delete("/:id/follow", generalLimiter, unfollowUser);
 
-module.exports = router;
+export default router;

@@ -11,17 +11,13 @@ import {
   deletePost,
 } from "../controllers/adminController.js";
 
-// Apply admin middleware to all routes
 router.use(requireAdmin);
 
-// Dashboard stats
 router.post("/stats", getAdminStats);
 
-// User management
 router.post("/users", getUsers);
 router.put("/users/:userId/role", updateUserRole);
 
-// Content management
 router.post("/posts", getPosts);
 router.put("/posts/:postId/status", updatePostStatus);
 router.put("/posts/:postId/featured", updatePostFeatured);

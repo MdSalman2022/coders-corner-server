@@ -11,7 +11,6 @@ import { generalLimiter } from "../middleware/rateLimit.js";
 
 const router = express.Router();
 
-// Upload single image
 router.post("/single", generalLimiter, uploadSingle, async (req, res) => {
   try {
     console.log("📥 Upload request received");
@@ -34,7 +33,6 @@ router.post("/single", generalLimiter, uploadSingle, async (req, res) => {
 
     console.log("📤 Uploading to Cloudinary...");
 
-    // Upload to Cloudinary - no resource_type needed, it's auto
     const result = await uploadToCloudinary(req.file.buffer, {
       public_id: `blog-posts/post-${Date.now()}`,
       folder: "blog-posts",
@@ -42,7 +40,6 @@ router.post("/single", generalLimiter, uploadSingle, async (req, res) => {
 
     console.log("✅ Upload successful!");
 
-    // Return the uploaded image details
     res.json({
       success: true,
       image: {
@@ -63,7 +60,6 @@ router.post("/single", generalLimiter, uploadSingle, async (req, res) => {
   }
 });
 
-// Upload multiple images
 router.post("/multiple", generalLimiter, uploadMultiple, async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -74,7 +70,6 @@ router.post("/multiple", generalLimiter, uploadMultiple, async (req, res) => {
 
     console.log(`📤 Uploading ${req.files.length} images to Cloudinary...`);
 
-    // Upload each file to Cloudinary
     const uploadPromises = req.files.map(async (file, index) => {
       const result = await uploadToCloudinary(file.buffer, {
         public_id: `blog-posts/post-${Date.now()}-${index}`,
@@ -108,7 +103,6 @@ router.post("/multiple", generalLimiter, uploadMultiple, async (req, res) => {
   }
 });
 
-// Delete image
 router.delete("/:publicId", generalLimiter, async (req, res) => {
   try {
     const { publicId } = req.params;
@@ -139,7 +133,6 @@ router.delete("/:publicId", generalLimiter, async (req, res) => {
   }
 });
 
-// Get image info
 router.get("/info/:publicId", generalLimiter, async (req, res) => {
   try {
     const { publicId } = req.params;
@@ -150,7 +143,6 @@ router.get("/info/:publicId", generalLimiter, async (req, res) => {
       });
     }
 
-    // Get image info from Cloudinary
     const result = await cloudinary.api.resource(publicId);
 
     res.json({

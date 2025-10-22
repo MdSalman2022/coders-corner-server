@@ -13,12 +13,10 @@ import { sanitizeInput } from "../middleware/security.js";
 
 const router = express.Router();
 
-// Public routes
 router.get("/", generalLimiter, getPosts);
 router.get("/search", generalLimiter, searchPosts);
 router.get("/:id", generalLimiter, getPostById);
 
-// Protected routes (authentication handled client-side with Better Auth)
 router.post("/", createPostLimiter, sanitizeInput, createPost);
 router.put("/:id", generalLimiter, sanitizeInput, updatePost);
 router.delete("/:id", generalLimiter, deletePost);

@@ -5,30 +5,25 @@ import Notification from "../models/Notification.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ensureUserExists } from "../utils/userSync.js";
 import dotenv from "dotenv";
-
-// Load environment variables from .env file
 dotenv.config();
 
-// Function to strip HTML tags and get clean text
 const stripHtml = (html) => {
   if (!html) return "";
 
-  // Remove HTML tags using regex
   return html
-    .replace(/<[^>]*>/g, "") // Remove HTML tags
-    .replace(/&nbsp;/g, " ") // Replace non-breaking spaces
-    .replace(/&amp;/g, "&") // Replace ampersands
-    .replace(/&lt;/g, "<") // Replace less than
-    .replace(/&gt;/g, ">") // Replace greater than
-    .replace(/&quot;/g, '"') // Replace quotes
-    .replace(/&#39;/g, "'") // Replace apostrophes
-    .replace(/\s+/g, " ") // Replace multiple spaces with single space
-    .trim(); // Remove leading/trailing whitespace
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
 };
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Debug: Check API key on startup
 console.log("🔧 Gemini AI Configuration:");
 console.log("  API Key present:", !!process.env.GEMINI_API_KEY);
 console.log(
@@ -51,13 +46,11 @@ const getPosts = async (req, res) => {
     if (tag) query.tags = { $in: [tag] };
     if (featured === "true") query.isFeatured = true;
 
-    // Handle author filtering by betterAuthId
     if (author) {
       const user = await User.findOne({ betterAuthId: author });
       if (user) {
         query.author = user._id;
       } else {
-        // If user not found, return empty results
         return res.json({
           posts: [],
           totalPages: 0,
@@ -75,7 +68,6 @@ const getPosts = async (req, res) => {
         "name avatar bio betterAuthId location position education work createdAt"
       );
 
-    // Transform the populated data to match frontend expectations
     const postsWithAuthors = posts.map((post) => ({
       ...post.toObject(),
       author: {
@@ -111,17 +103,14 @@ const getPostById = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Increment views
     post.views += 1;
     await post.save();
 
-    // Populate author and comments
     await post.populate(
       "author",
       "name avatar bio betterAuthId location position education work createdAt"
     );
 
-    // Get comments with populated authors
     const commentsWithAuthors = await Promise.all(
       post.comments.map(async (commentId) => {
         const comment = await Comment.findById(commentId).populate(
@@ -171,50 +160,43 @@ const createPost = async (req, res) => {
       tags,
       category,
       status = "draft",
-      userId, // Better Auth user ID
+      userId,
       coverImage,
-      images = [], // Array of image objects
-      isFeatured = false, // Add featured flag
+      images = [],
+      isFeatured = false,
     } = req.body;
 
-    // Ensure user exists in users collection (auto-create if needed)
     let user = await ensureUserExists(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Generate excerpt and reading time (with AI fallback)
     const wordCount = content.split(/\s+/).length;
     let readingTime = Math.max(1, Math.ceil(wordCount / 200));
 
-    // Simple excerpt: First 150 characters from clean text + "..."
     let excerpt = stripHtml(content).substring(0, 150).trim();
     if (stripHtml(content).length > 150) {
       excerpt += "...";
     }
 
-    // Try AI enhancement (optional - don't fail if it doesn't work)
     try {
       if (process.env.GEMINI_API_KEY) {
         console.log("🤖 Starting AI excerpt generation...");
 
-        // Use the working model: gemini-2.5-flash-lite
         const model = genAI.getGenerativeModel({
           model: "gemini-2.5-flash-lite",
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 150, // Reduced to prevent MAX_TOKENS
+            maxOutputTokens: 150,
             topP: 0.8,
             topK: 40,
           },
         });
 
-        // Strip HTML tags from content for clean text
         const cleanContent = stripHtml(content);
         console.log("📝 Clean content length:", cleanContent.length);
 
-        // Create a more focused prompt with strict length limits
         const excerptPrompt = `Write a concise excerpt for this blog post. Keep it under 80 words (about 100 tokens).
 
 Title: "${title}"
@@ -233,7 +215,6 @@ Excerpt:`;
         console.log("📤 Sending prompt to Gemini...");
         console.log("📝 Prompt length:", excerptPrompt.length);
 
-        // Increase timeout to 15 seconds for AI processing
         const excerptResult = await Promise.race([
           model.generateContent(excerptPrompt),
           new Promise((_, reject) =>
@@ -246,7 +227,6 @@ Excerpt:`;
 
         console.log("✅ AI response received");
 
-        // Debug: Log response structure
         console.log("🔍 Response structure:", {
           hasCandidates: !!excerptResult.response.candidates,
           candidatesLength: excerptResult.response.candidates?.length,
@@ -254,7 +234,6 @@ Excerpt:`;
           usageMetadata: excerptResult.response.usageMetadata,
         });
 
-        // Check for safety ratings or finish reasons
         if (
           excerptResult.response.candidates &&
           excerptResult.response.candidates.length > 0
@@ -269,10 +248,8 @@ Excerpt:`;
           });
         }
 
-        // Extract text from Gemini response properly
         let aiExcerpt = "";
         try {
-          // Try the standard text() method first
           aiExcerpt = excerptResult.response.text().trim();
           console.log(
             "📝 Extracted via text() method, length:",
@@ -280,7 +257,7 @@ Excerpt:`;
           );
         } catch (textError) {
           console.log("⚠️ Standard text() failed:", textError.message);
-          // Fallback: extract from candidates
+
           if (
             excerptResult.response.candidates &&
             excerptResult.response.candidates.length > 0
@@ -314,13 +291,12 @@ Excerpt:`;
           aiExcerpt.substring(0, 100) + (aiExcerpt.length > 100 ? "..." : "")
         );
 
-        // Clean and validate the excerpt
         let cleanExcerpt = aiExcerpt
-          .replace(/[*_`~]/g, "") // Remove markdown formatting: *bold*, _italic_, `code`, ~strikethrough~
-          .replace(/\n+/g, " ") // Replace newlines with spaces
-          .replace(/\s+/g, " ") // Normalize multiple spaces
-          .replace(/[""]/g, '"') // Normalize quotes
-          .replace(/['']/g, "'") // Normalize apostrophes
+          .replace(/[*_`~]/g, "")
+          .replace(/\n+/g, " ")
+          .replace(/\s+/g, " ")
+          .replace(/[""]/g, '"')
+          .replace(/['']/g, "'")
           .trim();
 
         console.log(
@@ -329,23 +305,21 @@ Excerpt:`;
             (cleanExcerpt.length > 100 ? "..." : "")
         );
 
-        // Validate the excerpt - be more strict about length and content
         const excerptWordCount = cleanExcerpt.split(/\s+/).length;
         if (
           cleanExcerpt &&
           cleanExcerpt.length > 10 &&
           cleanExcerpt.length < 200 &&
           excerptWordCount <= 80 &&
-          !cleanExcerpt.includes("<") && // No HTML tags
-          !cleanExcerpt.includes("*") && // No remaining markdown
-          cleanExcerpt.split(".").length <= 3 // Max 3 sentences
+          !cleanExcerpt.includes("<") &&
+          !cleanExcerpt.includes("*") &&
+          cleanExcerpt.split(".").length <= 3
         ) {
           excerpt = cleanExcerpt;
           console.log(
             `✅ AI excerpt accepted (${excerptWordCount} words, ${cleanExcerpt.length} chars)`
           );
         } else if (cleanExcerpt && cleanExcerpt.length > 200) {
-          // Truncate long responses to fit our limits
           const truncated = cleanExcerpt.substring(0, 180).trim();
           const lastSpace = truncated.lastIndexOf(" ");
           const finalExcerpt =
@@ -372,7 +346,6 @@ Excerpt:`;
     } catch (aiError) {
       console.log("🤖 AI excerpt generation failed:", aiError.message);
 
-      // Log more details for debugging
       if (aiError.message.includes("timeout")) {
         console.log(
           "⏰ AI request timed out - this is normal for slow API responses"
@@ -389,7 +362,6 @@ Excerpt:`;
         console.log("❌ Unknown AI error:", aiError);
       }
 
-      // Continue with fallback excerpt (already set above)
       console.log("📝 Using fallback excerpt instead");
     }
 
@@ -399,7 +371,7 @@ Excerpt:`;
       excerpt,
       coverImage,
       images,
-      author: user._id, // Use ObjectId reference
+      author: user._id,
       tags,
       category,
       status,
@@ -409,7 +381,6 @@ Excerpt:`;
 
     await post.save();
 
-    // Update user stats
     await User.findByIdAndUpdate(user._id, {
       $inc: { "stats.postsCount": 1 },
     });
@@ -436,13 +407,11 @@ const updatePost = async (req, res) => {
       isFeatured,
     } = req.body;
 
-    // Find the post
     const post = await Post.findById(id);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Check if user owns the post
     const user = await ensureUserExists(userId);
     if (!post.author.equals(user._id)) {
       return res
@@ -450,11 +419,10 @@ const updatePost = async (req, res) => {
         .json({ message: "Not authorized to edit this post" });
     }
 
-    // Update fields
     if (title) post.title = title;
     if (content) {
       post.content = content;
-      // Regenerate excerpt if content changed - use clean text
+
       const cleanContent = stripHtml(content);
       post.excerpt = cleanContent.substring(0, 150).trim();
       if (cleanContent.length > 150) post.excerpt += "...";
@@ -470,7 +438,6 @@ const updatePost = async (req, res) => {
 
     await post.save();
 
-    // Populate author for response
     await post.populate("author", "name avatar betterAuthId");
 
     const postWithAuthor = {
@@ -493,13 +460,11 @@ const deletePost = async (req, res) => {
     const { id } = req.params;
     const { userId } = req.body;
 
-    // Find the post
     const post = await Post.findById(id);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Check if user owns the post
     const user = await ensureUserExists(userId);
     if (!post.author.equals(user._id)) {
       return res
@@ -507,13 +472,10 @@ const deletePost = async (req, res) => {
         .json({ message: "Not authorized to delete this post" });
     }
 
-    // Delete associated comments
     await Comment.deleteMany({ post: id });
 
-    // Delete the post
     await Post.findByIdAndDelete(id);
 
-    // Update user stats
     await User.findByIdAndUpdate(user._id, {
       $inc: { "stats.postsCount": -1 },
     });
@@ -532,9 +494,8 @@ const likePost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    const { userId } = req.body; // Better Auth user ID
+    const { userId } = req.body;
 
-    // Find the user by betterAuthId
     const user = await ensureUserExists(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -547,7 +508,6 @@ const likePost = async (req, res) => {
     } else {
       post.likes.push(user._id);
 
-      // Create notification if liking someone else's post
       if (post.author.toString() !== user._id.toString()) {
         const notification = new Notification({
           recipient: post.author,
@@ -584,7 +544,6 @@ const searchPosts = async (req, res) => {
         "name avatar bio betterAuthId location position education work createdAt"
       );
 
-    // Transform the populated data to match frontend expectations
     const postsWithAuthors = posts.map((post) => ({
       ...post.toObject(),
       author: {

@@ -3,7 +3,6 @@ import Post from "../models/Post.js";
 import Role from "../models/Role.js";
 import { requireAdmin } from "../middleware/auth.js";
 
-// Get admin dashboard stats
 const getAdminStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -11,7 +10,6 @@ const getAdminStats = async (req, res) => {
     const publishedPosts = await Post.countDocuments({ status: "published" });
     const draftPosts = await Post.countDocuments({ status: "draft" });
 
-    // Get recent activity
     const recentUsers = await User.find()
       .sort({ createdAt: -1 })
       .limit(5)
@@ -41,7 +39,6 @@ const getAdminStats = async (req, res) => {
   }
 };
 
-// Get all users with pagination
 const getUsers = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "" } = req.body;
@@ -85,19 +82,16 @@ const getUsers = async (req, res) => {
   }
 };
 
-// Update user role
 const updateUserRole = async (req, res) => {
   try {
     const { userId } = req.params;
     const { roleName } = req.body;
 
-    // Validate role exists
     const role = await Role.findOne({ name: roleName });
     if (!role) {
       return res.status(400).json({ message: "Invalid role" });
     }
 
-    // Update user
     const user = await User.findByIdAndUpdate(
       userId,
       {
@@ -126,7 +120,6 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-// Get all posts for moderation
 const getPosts = async (req, res) => {
   try {
     const { page = 1, limit = 10, status = "all", search = "" } = req.body;
@@ -172,7 +165,6 @@ const getPosts = async (req, res) => {
   }
 };
 
-// Update post status
 const updatePostStatus = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -207,7 +199,6 @@ const updatePostStatus = async (req, res) => {
   }
 };
 
-// Delete post
 const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -217,7 +208,6 @@ const deletePost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Update user stats
     await User.findByIdAndUpdate(post.author, {
       $inc: { "stats.postsCount": -1 },
     });
@@ -229,7 +219,6 @@ const deletePost = async (req, res) => {
   }
 };
 
-// Update post featured status
 const updatePostFeatured = async (req, res) => {
   try {
     const { postId } = req.params;

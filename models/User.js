@@ -1,16 +1,16 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-  betterAuthId: { type: String, required: true, unique: true }, // Better Auth user ID
+  betterAuthId: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   avatar: { type: String },
   bio: { type: String },
   website: { type: String },
   location: { type: String },
-  position: { type: String }, // Job position/title
-  education: { type: String }, // Education background
-  work: { type: String }, // Current work/organization
+  position: { type: String },
+  education: { type: String },
+  work: { type: String },
   skills: [{ type: String }],
   socialLinks: {
     github: { type: String },
@@ -21,12 +21,12 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Role",
     required: true,
-  }, // Role-based access control
+  },
   roleName: {
     type: String,
     enum: ["user", "admin"],
     default: "user",
-  }, // Cached for performance
+  },
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   preferences: {
@@ -47,7 +47,6 @@ userSchema.pre("save", function (next) {
   next();
 });
 
-// Prevent model overwrite error
 const User =
   mongoose.models.User || mongoose.model("User", userSchema, "userinfo");
 export default User;

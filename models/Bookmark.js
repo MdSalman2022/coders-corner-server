@@ -16,7 +16,6 @@ const bookmarkSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Ensure a user can't bookmark the same post twice
 bookmarkSchema.index({ userId: 1, postId: 1 }, { unique: true });
 
 export default mongoose.model("Bookmark", bookmarkSchema);

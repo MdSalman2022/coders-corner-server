@@ -1,7 +1,6 @@
 import User from "../models/User.js";
 import Role from "../models/Role.js";
 
-// Permission constants
 const PERMISSIONS = {
   READ: "read",
   WRITE: "write",
@@ -12,17 +11,14 @@ const PERMISSIONS = {
   MANAGE_USERS: "manage_users",
 };
 
-// Middleware to get user from request (Better Auth handles session)
 const getUserFromRequest = async (req, res, next) => {
   try {
-    // Better Auth session provides userId in request body
     const userId = req.body.userId;
 
     if (!userId) {
       return res.status(401).json({ message: "Authentication required" });
     }
 
-    // Get user with role populated
     const user = await User.findById(userId).populate("role");
     if (!user) {
       return res.status(401).json({ message: "User not found" });
@@ -36,7 +32,6 @@ const getUserFromRequest = async (req, res, next) => {
   }
 };
 
-// Check if user has specific permission
 const hasPermission = async (userId, permission) => {
   console.log("userId, permission", userId, permission);
   try {
@@ -53,7 +48,6 @@ const hasPermission = async (userId, permission) => {
   }
 };
 
-// Check if user has any of the specified permissions
 const hasAnyPermission = async (userId, permissions) => {
   try {
     const user = await User.findById(userId).populate("role");
@@ -70,7 +64,6 @@ const hasAnyPermission = async (userId, permissions) => {
   }
 };
 
-// Check if user has all specified permissions
 const hasAllPermissions = async (userId, permissions) => {
   try {
     const user = await User.findById(userId).populate("role");
@@ -87,17 +80,15 @@ const hasAllPermissions = async (userId, permissions) => {
   }
 };
 
-// Check if user is admin
 const isAdmin = async (userId) => {
   console.log("isAdmin", userId);
   return await hasPermission(userId, PERMISSIONS.ADMIN);
 };
 
-// Middleware to require specific permission
 const requirePermission = (permission) => {
   return async (req, res, next) => {
     try {
-      const userId = req.body.userId; // Assuming userId is passed in request body
+      const userId = req.body.userId;
 
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
@@ -116,10 +107,8 @@ const requirePermission = (permission) => {
   };
 };
 
-// Middleware to require admin access
 const requireAdmin = async (req, res, next) => {
   try {
-    // Try to get userId from body (POST/PUT/DELETE) or from Authorization header (GET)
     let userId = req.body.userId;
     console.log(
       "userId",
@@ -129,10 +118,9 @@ const requireAdmin = async (req, res, next) => {
     );
 
     if (!userId && req.headers.authorization) {
-      // Extract userId from Authorization header (format: "Bearer <userId>")
       const authHeader = req.headers.authorization;
       if (authHeader && authHeader.startsWith("Bearer ")) {
-        userId = authHeader.substring(7); // Remove "Bearer " prefix
+        userId = authHeader.substring(7);
       }
     }
 

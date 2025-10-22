@@ -4,12 +4,10 @@ import Post from "../models/Post.js";
 import User from "../models/User.js";
 import { ensureUserExists } from "../utils/userSync.js";
 
-// Get user overall stats
 router.get("/user/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Ensure user exists
     const user = await ensureUserExists(userId);
     if (!user) {
       return res.status(404).json({
@@ -18,10 +16,8 @@ router.get("/user/:userId", async (req, res) => {
       });
     }
 
-    // Get all user posts
     const posts = await Post.find({ author: user._id, status: "published" });
 
-    // Calculate stats
     const totalViews = posts.reduce((sum, post) => sum + (post.views || 0), 0);
     const totalLikes = posts.reduce(
       (sum, post) => sum + (post.likes?.length || 0),
@@ -34,7 +30,6 @@ router.get("/user/:userId", async (req, res) => {
     const averageViews =
       posts.length > 0 ? Math.round(totalViews / posts.length) : 0;
 
-    // Get user followers/following
     const followers = user?.followers?.length || 0;
     const following = user?.following?.length || 0;
 
@@ -44,7 +39,7 @@ router.get("/user/:userId", async (req, res) => {
         totalViews,
         totalLikes,
         totalComments,
-        totalReads: totalViews, // For now, reads = views
+        totalReads: totalViews,
         followers,
         following,
         totalPosts: posts.length,
@@ -60,7 +55,6 @@ router.get("/user/:userId", async (req, res) => {
   }
 });
 
-// Get post stats
 router.get("/posts", async (req, res) => {
   try {
     const { userId, timeRange } = req.query;
@@ -72,7 +66,6 @@ router.get("/posts", async (req, res) => {
       });
     }
 
-    // Calculate date range
     const now = new Date();
     let dateFrom = new Date();
 
@@ -81,9 +74,7 @@ router.get("/posts", async (req, res) => {
     } else if (timeRange === "month") {
       dateFrom.setMonth(now.getMonth() - 1);
     }
-    // else "all" - no date filter
 
-    // Get posts
     const query = {
       author: user._id,
       status: "published",
@@ -97,12 +88,11 @@ router.get("/posts", async (req, res) => {
       .select("title views likes comments createdAt publishedAt")
       .sort({ publishedAt: -1 });
 
-    // Add engagement rate to each post
     const postsWithEngagement = posts.map((post) => ({
       _id: post._id,
       title: post.title,
       views: post.views || 0,
-      reads: post.views || 0, // For now, reads = views
+      reads: post.views || 0,
       likes: post.likes?.length || 0,
       comments: post.comments?.length || 0,
       createdAt: post.createdAt,
@@ -115,7 +105,6 @@ router.get("/posts", async (req, res) => {
           : 0,
     }));
 
-    // Calculate summary
     const summary = {
       totalViews: postsWithEngagement.reduce((sum, p) => sum + p.views, 0),
       totalReads: postsWithEngagement.reduce((sum, p) => sum + p.reads, 0),
@@ -141,7 +130,6 @@ router.get("/posts", async (req, res) => {
   }
 });
 
-// Track view
 router.post("/views/:postId", async (req, res) => {
   try {
     const { postId } = req.params;

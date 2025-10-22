@@ -2,7 +2,6 @@ import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
 import dotenv from "dotenv";
 
-// Load environment variables from .env file
 dotenv.config();
 
 // Configure Cloudinary
@@ -19,10 +18,8 @@ console.log("🔧 Cloudinary Configuration:", {
   api_secret: cloudinary.config().api_secret ? "✅ Set" : "❌ Missing",
 });
 
-// Configure multer for memory storage (we'll upload to Cloudinary after)
 const storage = multer.memoryStorage();
 
-// File filter for images only
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) {
     cb(null, true);
@@ -31,16 +28,14 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Create multer upload middleware
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 5 * 1024 * 1024,
   },
 });
 
-// Upload to Cloudinary function
 const uploadToCloudinary = (buffer, options = {}) => {
   return new Promise((resolve, reject) => {
     const uploadOptions = {
@@ -80,13 +75,10 @@ const uploadToCloudinary = (buffer, options = {}) => {
   });
 };
 
-// Single image upload middleware
 const uploadSingle = upload.single("image");
 
-// Multiple images upload middleware
-const uploadMultiple = upload.array("images", 10); // Max 10 images
+const uploadMultiple = upload.array("images", 10);
 
-// Delete image from Cloudinary
 const deleteImage = async (publicId) => {
   try {
     const result = await cloudinary.uploader.destroy(publicId);
@@ -97,9 +89,7 @@ const deleteImage = async (publicId) => {
   }
 };
 
-// Extract public ID from Cloudinary URL
 const getPublicIdFromUrl = (url) => {
-  // Cloudinary URL format: https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{public_id}.{format}
   const matches = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z]+$/);
   return matches ? matches[1] : null;
 };

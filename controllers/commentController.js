@@ -10,8 +10,6 @@ const getComments = async (req, res) => {
     const comments = await Comment.find({ post: postId })
       .sort({ createdAt: 1 })
       .populate("author", "name avatar betterAuthId");
-
-    // Transform the populated data to match frontend expectations
     const commentsWithAuthors = comments.map((comment) => ({
       ...comment.toObject(),
       author: {
@@ -32,14 +30,12 @@ const createComment = async (req, res) => {
     const { postId } = req.params;
     const { content, userId } = req.body;
 
-    // Ensure user exists in users collection (auto-create if needed)
     const user = await ensureUserExists(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check if post exists
     const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
@@ -47,17 +43,15 @@ const createComment = async (req, res) => {
 
     const comment = new Comment({
       content,
-      author: user._id, // Use ObjectId reference
+      author: user._id,
       post: postId,
     });
 
     await comment.save();
 
-    // Add comment to post
     post.comments.push(comment._id);
     await post.save();
 
-    // Populate author data and return
     await comment.populate("author", "name avatar betterAuthId");
     const commentWithAuthor = {
       ...comment.toObject(),
@@ -68,7 +62,6 @@ const createComment = async (req, res) => {
       },
     };
 
-    // Create notification if commenting on someone else's post
     if (post.author.toString() !== user._id.toString()) {
       const notification = new Notification({
         recipient: post.author,
@@ -92,7 +85,6 @@ const updateComment = async (req, res) => {
     const { commentId } = req.params;
     const { content, userId } = req.body;
 
-    // Find user
     const user = await User.findOne({ betterAuthId: userId });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -103,7 +95,6 @@ const updateComment = async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    // Check authorization
     if (comment.author.toString() !== user._id.toString()) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -111,7 +102,6 @@ const updateComment = async (req, res) => {
     comment.content = content;
     await comment.save();
 
-    // Populate and return
     await comment.populate("author", "name avatar betterAuthId");
     const commentWithAuthor = {
       ...comment.toObject(),
@@ -133,7 +123,6 @@ const deleteComment = async (req, res) => {
     const { commentId } = req.params;
     const { userId } = req.body;
 
-    // Find user
     const user = await User.findOne({ betterAuthId: userId });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -144,12 +133,10 @@ const deleteComment = async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    // Check authorization
     if (comment.author.toString() !== user._id.toString()) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    // Remove comment from post
     await Post.findByIdAndUpdate(comment.post, {
       $pull: { comments: commentId },
     });
@@ -166,7 +153,6 @@ const likeComment = async (req, res) => {
     const { commentId } = req.params;
     const { userId } = req.body;
 
-    // Find user
     const user = await User.findOne({ betterAuthId: userId });
     if (!user) {
       return res.status(404).json({ message: "User not found" });

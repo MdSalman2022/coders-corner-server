@@ -26,10 +26,8 @@ const port = process.env.PORT || 5000;
 
 (async () => {
   try {
-    // Connect to database FIRST
     await connectDB();
 
-    // Initialize Better Auth after database connection
     const auth = await initializeAuth();
 
     console.log(
@@ -38,7 +36,6 @@ const port = process.env.PORT || 5000;
     );
     console.log("🗄️  Database name:", mongoose.connection.db.databaseName);
 
-    // CORS configuration
     app.use(
       cors({
         origin: [
@@ -57,32 +54,27 @@ const port = process.env.PORT || 5000;
       })
     );
 
-    // Better Auth handler - Mount as middleware
     app.use("/api/auth", toNodeHandler(auth));
 
-    // Express middleware
     app.use(express.json({ limit: "10mb" }));
     app.use(express.urlencoded({ extended: true }));
 
     app.use(generalLimiter);
     app.use(securityHeaders);
 
-    // API routes
     app.use("/api/users", userRoutes);
     app.use("/api/posts", postRoutes);
     app.use("/api/comments", commentRoutes);
     app.use("/api/uploads", uploadRoutes);
     app.use("/api/admin", adminRoutes);
-    app.use("/api/user", authRoutes); // Changed from /api/auth to avoid conflict
+    app.use("/api/user", authRoutes);
     app.use("/api/bookmarks", bookmarkRoutes);
     app.use("/api/stats", statsRoutes);
 
-    // Health check
     app.get("/", (req, res) => {
       res.send("Coders Corner API is running");
     });
 
-    // Test endpoint
     app.get("/test", (req, res) => {
       res.json({
         message: "Better Auth API is running",
@@ -92,7 +84,6 @@ const port = process.env.PORT || 5000;
       });
     });
 
-    // Error handling
     app.use((err, req, res, next) => {
       console.error(err.stack);
       res.status(500).send("Something broke!");

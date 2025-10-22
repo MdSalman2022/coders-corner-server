@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-  betterAuthId: { type: String, required: true, unique: true }, // Better Auth user ID
+  betterAuthId: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   avatar: { type: String },
@@ -34,7 +34,6 @@ userSchema.pre("save", function (next) {
   next();
 });
 
-// Prevent model overwrite error
 const User =
   mongoose.models.User || mongoose.model("User", userSchema, "userinfo");
 export default User;

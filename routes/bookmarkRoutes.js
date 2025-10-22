@@ -4,7 +4,6 @@ import Bookmark from "../models/Bookmark.js";
 import Post from "../models/Post.js";
 import { ensureUserExists } from "../utils/userSync.js";
 
-// OPTIMIZED: Get only bookmark post IDs (lightweight)
 router.get("/ids", async (req, res) => {
   try {
     const { userId } = req.query;
@@ -16,7 +15,6 @@ router.get("/ids", async (req, res) => {
       });
     }
 
-    // Ensure user exists and get MongoDB _id
     const user = await ensureUserExists(userId);
     if (!user) {
       console.error("❌ User not found:", userId);
@@ -26,10 +24,9 @@ router.get("/ids", async (req, res) => {
       });
     }
 
-    // Only fetch post IDs, not full post data (much faster)
     const bookmarks = await Bookmark.find({ userId: user._id })
       .select("postId")
-      .lean(); // Use lean() for faster queries
+      .lean();
 
     const postIds = bookmarks.map((b) => b.postId.toString());
 
@@ -49,12 +46,10 @@ router.get("/ids", async (req, res) => {
   }
 });
 
-// Create bookmark
 router.post("/", async (req, res) => {
   try {
     const { postId, userId } = req.body;
 
-    // Validate inputs
     if (!postId || !userId) {
       return res.status(400).json({
         success: false,
@@ -62,7 +57,6 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Ensure user exists
     const user = await ensureUserExists(userId);
     if (!user) {
       return res.status(404).json({
@@ -71,7 +65,6 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Check if post exists
     const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({
@@ -80,7 +73,6 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Check if already bookmarked
     const existingBookmark = await Bookmark.findOne({
       userId: user._id,
       postId,
@@ -92,7 +84,6 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Create bookmark
     const bookmark = new Bookmark({
       userId: user._id,
       postId,
@@ -114,7 +105,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Get user bookmarks
 router.get("/", async (req, res) => {
   try {
     const { userId } = req.query;
@@ -128,7 +118,6 @@ router.get("/", async (req, res) => {
       });
     }
 
-    // Ensure user exists and get MongoDB _id
     const user = await ensureUserExists(userId);
     if (!user) {
       console.error("❌ User not found:", userId);
@@ -154,7 +143,6 @@ router.get("/", async (req, res) => {
 
     console.log("📚 Bookmarks found:", bookmarks.length);
 
-    // Format response
     const formattedBookmarks = bookmarks.map((bookmark) => ({
       ...bookmark.postId.toObject(),
       _id: bookmark.postId._id,
@@ -174,7 +162,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Check if post is bookmarked
 router.get("/check/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
@@ -187,7 +174,6 @@ router.get("/check/:postId", async (req, res) => {
       });
     }
 
-    // Ensure user exists
     const user = await ensureUserExists(userId);
     if (!user) {
       return res.status(404).json({
@@ -212,7 +198,6 @@ router.get("/check/:postId", async (req, res) => {
   }
 });
 
-// Remove bookmark
 router.delete("/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
@@ -225,7 +210,6 @@ router.delete("/:postId", async (req, res) => {
       });
     }
 
-    // Ensure user exists
     const user = await ensureUserExists(userId);
     if (!user) {
       return res.status(404).json({

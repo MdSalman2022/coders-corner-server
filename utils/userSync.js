@@ -2,14 +2,8 @@ import User from "../models/User.js";
 import Role from "../models/Role.js";
 import mongoose from "mongoose";
 
-/**
- * Ensures a User profile exists in the users collection
- * If not, creates one from Better Auth data
- * Industry standard: Lazy loading/Just-in-time sync
- */
 async function ensureUserExists(betterAuthId) {
   try {
-    // Check if user already exists
     let user = await User.findOne({ betterAuthId });
 
     if (user) {
@@ -19,7 +13,6 @@ async function ensureUserExists(betterAuthId) {
     console.log(`🔄 User not found in users collection: ${betterAuthId}`);
     console.log(`📝 Creating profile from Better Auth data...`);
 
-    // Get user from Better Auth collection
     const db = mongoose.connection.db;
     const betterAuthUser = await db
       .collection("user")
@@ -30,21 +23,19 @@ async function ensureUserExists(betterAuthId) {
       return null;
     }
 
-    // Get default user role
     const defaultRole = await Role.findOne({ isDefault: true });
     if (!defaultRole) {
       console.error("❌ No default role found! Please run role seeding first.");
       return null;
     }
 
-    // Create User profile
     user = new User({
       betterAuthId: betterAuthUser.id,
       name: betterAuthUser.name || "User",
       email: betterAuthUser.email,
       avatar: betterAuthUser.image || null,
-      role: defaultRole._id, // Assign default role
-      roleName: defaultRole.name, // Cache role name for performance
+      role: defaultRole._id,
+      roleName: defaultRole.name,
       bio: null,
       website: null,
       location: null,
@@ -76,11 +67,6 @@ async function ensureUserExists(betterAuthId) {
     return null;
   }
 }
-
-/**
- * Syncs all Better Auth users to users collection
- * Useful for batch operations
- */
 async function syncAllUsers() {
   try {
     const db = mongoose.connection.db;
@@ -91,7 +77,6 @@ async function syncAllUsers() {
     let created = 0;
     let skipped = 0;
 
-    // Get default user role
     const defaultRole = await Role.findOne({ isDefault: true });
     if (!defaultRole) {
       console.error("❌ No default role found! Please run role seeding first.");
@@ -111,8 +96,8 @@ async function syncAllUsers() {
         name: betterAuthUser.name || "User",
         email: betterAuthUser.email,
         avatar: betterAuthUser.image || null,
-        role: defaultRole._id, // Assign default role
-        roleName: defaultRole.name, // Cache role name for performance
+        role: defaultRole._id,
+        roleName: defaultRole.name,
         bio: null,
         website: null,
         location: null,

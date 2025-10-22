@@ -8,7 +8,6 @@ export const initializeAuth = async () => {
     return authInstance;
   }
 
-  // Wait for mongoose connection
   if (mongoose.connection.readyState !== 1) {
     throw new Error(
       "Database not connected. Call initializeAuth() after connectDB()"
@@ -33,7 +32,6 @@ export const initializeAuth = async () => {
   );
 
   try {
-    // Dynamic import to avoid ES module issues
     const { betterAuth } = await import("better-auth");
     const { mongodbAdapter } = await import("better-auth/adapters/mongodb");
 
@@ -57,7 +55,7 @@ export const initializeAuth = async () => {
           clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
         },
       },
-      // Better Auth handles user profiles directly - no need for separate collection
+
       user: {
         additionalFields: {
           bio: {
@@ -124,21 +122,21 @@ export const initializeAuth = async () => {
       session: {
         cookieCache: {
           enabled: true,
-          maxAge: 60 * 60 * 24 * 7, // 7 days instead of 5 minutes
+          maxAge: 60 * 60 * 24 * 7,
         },
-        expiresIn: 60 * 60 * 24 * 7, // 7 days
-        updateAge: 60 * 60 * 24, // Update session every 24 hours
+        expiresIn: 60 * 60 * 24 * 7,
+        updateAge: 60 * 60 * 24,
       },
       advanced: {
         crossSubDomainCookies: {
-          enabled: false, // Disable for localhost
+          enabled: false,
         },
-        disableCSRFCheck: true, // Disable for development
+        disableCSRFCheck: true,
         defaultRedirectURL: process.env.FRONTEND_URL || "http://localhost:3000",
-        // Add session refresh settings
+
         sessionRefresh: {
           enabled: true,
-          interval: 60 * 60 * 1000, // 1 hour
+          interval: 60 * 60 * 1000,
         },
       },
     });

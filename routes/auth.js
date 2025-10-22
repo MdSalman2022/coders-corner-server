@@ -2,31 +2,27 @@ import express from "express";
 const router = express.Router();
 import User from "../models/User.js";
 
-// Get current user data (for auth context)
 router.post("/me", async (req, res) => {
   try {
-    // Get userId from request body (passed from frontend)
     const { userId } = req.body;
 
     if (!userId) {
       return res.status(401).json({ message: "Authentication required" });
     }
 
-    // Find user and populate role to get roleName
     const user = await User.findOne({ betterAuthId: userId })
       .populate("role", "name displayName permissions")
-      .select("-password"); // Exclude sensitive fields if any
+      .select("-password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Return user with roleName
     res.json({
       user: {
         ...user.toObject(),
-        roleName: user.role?.name || user.roleName || "user", // Fallback
-        id: user.betterAuthId, // Ensure consistent ID field
+        roleName: user.role?.name || user.roleName || "user",
+        id: user.betterAuthId,
       },
     });
   } catch (error) {

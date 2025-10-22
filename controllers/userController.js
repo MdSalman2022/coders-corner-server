@@ -21,7 +21,6 @@ const createUserProfile = async (req, res) => {
       stats,
     } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ betterAuthId });
     if (existingUser) {
       return res.status(409).json({ message: "User profile already exists" });
@@ -71,7 +70,7 @@ const getUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
     let user;
-    // Look up by Better Auth ID
+
     console.log(`🔍 Looking up user by Better Auth ID: ${id}`);
     user = await User.findOne({ betterAuthId: id });
 
@@ -79,12 +78,10 @@ const getUserProfile = async (req, res) => {
       console.log(`🔄 Attempting to create profile from Better Auth data...`);
 
       try {
-        // Get user from Better Auth collection
         const db = mongoose.connection.db;
         const betterAuthUser = await db.collection("user").findOne({ id });
 
         if (betterAuthUser) {
-          // Create User profile
           user = new User({
             betterAuthId: betterAuthUser.id,
             name: betterAuthUser.name || "User",
@@ -133,24 +130,20 @@ const getUserProfile = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
   try {
-    const { userId } = req.body; // Better Auth user ID from frontend
+    const { userId } = req.body;
     const updates = req.body;
 
-    // Remove userId from updates to avoid conflicts
     delete updates.userId;
 
-    // Validate required fields
     if (!userId) {
       return res.status(400).json({ message: "User ID is required" });
     }
 
-    // Find user by Better Auth ID
     const user = await User.findOne({ betterAuthId: userId });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Allowed fields for update
     const allowedFields = [
       "name",
       "bio",
@@ -161,7 +154,6 @@ const updateUserProfile = async (req, res) => {
       "preferences",
     ];
 
-    // Filter updates to only allowed fields
     const filteredUpdates = {};
     Object.keys(updates).forEach((key) => {
       if (allowedFields.includes(key)) {
@@ -169,7 +161,6 @@ const updateUserProfile = async (req, res) => {
       }
     });
 
-    // Update user
     Object.assign(user, filteredUpdates);
     user.updatedAt = new Date();
 
@@ -204,8 +195,8 @@ const updateUserProfile = async (req, res) => {
 const followUser = async (req, res) => {
   try {
     const targetBetterAuthId = req.params.id;
-    // TODO: Get current user ID from Better Auth session
-    const currentBetterAuthId = req.body.betterAuthId || "placeholder"; // This needs proper implementation
+
+    const currentBetterAuthId = req.body.betterAuthId || "placeholder";
 
     const targetUser = await User.findOne({ betterAuthId: targetBetterAuthId });
     const currentUser = await User.findOne({
@@ -229,7 +220,6 @@ const followUser = async (req, res) => {
     await currentUser.save();
     await targetUser.save();
 
-    // Create notification
     const notification = new Notification({
       recipient: targetUser._id,
       sender: currentUser._id,
@@ -247,7 +237,7 @@ const followUser = async (req, res) => {
 const unfollowUser = async (req, res) => {
   try {
     const targetBetterAuthId = req.params.id;
-    const { userId } = req.body; // Current user's Better Auth ID
+    const { userId } = req.body;
 
     if (!userId) {
       return res.status(400).json({ message: "User ID is required" });
@@ -264,7 +254,6 @@ const unfollowUser = async (req, res) => {
       return res.status(400).json({ message: "Not following this user" });
     }
 
-    // Remove from following/followers arrays
     currentUser.following = currentUser.following.filter(
       (id) => !id.equals(targetUser._id)
     );
@@ -272,7 +261,6 @@ const unfollowUser = async (req, res) => {
       (id) => !id.equals(currentUser._id)
     );
 
-    // Update stats
     currentUser.stats.followingCount = currentUser.following.length;
     targetUser.stats.followersCount = targetUser.followers.length;
 
@@ -312,13 +300,12 @@ const getUserStats = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
   try {
-    const { userId } = req.body; // Get from request body instead of query
+    const { userId } = req.body;
 
     if (!userId) {
       return res.status(400).json({ message: "User ID is required" });
     }
 
-    // Find user by Better Auth ID and populate role
     const user = await User.findOne({ betterAuthId: userId }).populate(
       "role",
       "name displayName permissions"
@@ -328,7 +315,6 @@ const getCurrentUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Return user data with role information
     res.json({
       user: {
         _id: user._id,

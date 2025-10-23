@@ -110,6 +110,14 @@ export const initializeAuth = async () => {
         },
         expiresIn: 60 * 60 * 24 * 7,
         updateAge: 60 * 60 * 24,
+        cookie: {
+          attributes: {
+            secure: true,
+            httpOnly: true,
+            sameSite: "lax",
+            path: "/",
+          },
+        },
       },
       advanced: {
         crossSubDomainCookies: {
@@ -117,7 +125,6 @@ export const initializeAuth = async () => {
         },
         disableCSRFCheck: true,
         defaultRedirectURL: CLIENT_URL,
-
         sessionRefresh: {
           enabled: true,
           interval: 60 * 60 * 1000,
@@ -129,6 +136,7 @@ export const initializeAuth = async () => {
     console.log("✅ User profiles handled via Better Auth additionalFields");
     console.log("📍 Base URL:", SERVER_URL);
     console.log("📍 Client URL:", CLIENT_URL);
+    console.log("📍 Cookie Settings: secure=true, httpOnly=true, sameSite=lax");
 
     return authInstance;
   } catch (error) {

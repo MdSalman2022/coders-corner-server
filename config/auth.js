@@ -100,7 +100,7 @@ export const initializeAuth = async () => {
           },
         },
       },
-      baseURL: SERVER_URL,
+      baseURL: CLIENT_URL, // Use client URL as base for OAuth redirects
       secret: BETTER_AUTH_SECRET,
       trustedOrigins: CORS_ORIGINS,
       session: {
@@ -114,7 +114,7 @@ export const initializeAuth = async () => {
           attributes: {
             secure: true,
             httpOnly: true,
-            sameSite: "lax",
+            sameSite: "none", // Changed from "lax" to "none" for cross-domain
             path: "/",
           },
         },

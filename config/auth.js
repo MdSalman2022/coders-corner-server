@@ -129,11 +129,6 @@ export const initializeAuth = async () => {
           enabled: true,
           interval: 60 * 60 * 1000,
         },
-        redirects: {
-          afterSignIn: CLIENT_URL,
-          afterSignUp: CLIENT_URL,
-          afterSignOut: CLIENT_URL,
-        },
       },
     });
 

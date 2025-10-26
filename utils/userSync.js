@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 
 async function ensureUserExists(betterAuthId) {
   try {
-    let user = await User.findOne({ betterAuthId });
+    let user = await User.findOne({ betterAuthId: betterAuthId });
 
     if (user) {
       return user;
@@ -14,9 +14,16 @@ async function ensureUserExists(betterAuthId) {
     console.log(`📝 Creating profile from Better Auth data...`);
 
     const db = mongoose.connection.db;
-    const betterAuthUser = await db
-      .collection("user")
-      .findOne({ id: betterAuthId });
+    const ObjectId = mongoose.Types.ObjectId;
+    let query;
+
+    try {
+      query = { _id: new ObjectId(betterAuthId) };
+    } catch (e) {
+      query = { id: betterAuthId };
+    }
+
+    const betterAuthUser = await db.collection("user").findOne(query);
 
     if (!betterAuthUser) {
       console.error(`❌ User not found in Better Auth: ${betterAuthId}`);
@@ -30,7 +37,7 @@ async function ensureUserExists(betterAuthId) {
     }
 
     user = new User({
-      betterAuthId: betterAuthUser.id,
+      betterAuthId: betterAuthUser._id.toString(), // Convert ObjectId to string
       name: betterAuthUser.name || "User",
       email: betterAuthUser.email,
       avatar: betterAuthUser.image || null,
@@ -84,7 +91,9 @@ async function syncAllUsers() {
     }
 
     for (const betterAuthUser of betterAuthUsers) {
-      const exists = await User.findOne({ betterAuthId: betterAuthUser.id });
+      const exists = await User.findOne({
+        betterAuthId: betterAuthUser._id.toString(),
+      });
 
       if (exists) {
         skipped++;
@@ -92,7 +101,7 @@ async function syncAllUsers() {
       }
 
       const newUser = new User({
-        betterAuthId: betterAuthUser.id,
+        betterAuthId: betterAuthUser._id.toString(), // Convert ObjectId to string
         name: betterAuthUser.name || "User",
         email: betterAuthUser.email,
         avatar: betterAuthUser.image || null,
